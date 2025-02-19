@@ -8,7 +8,7 @@ number:
 date:
 consensus: true
 v: 3
-area: "Transport"
+area: ""
 workgroup: "QUIC"
 keyword:
  - deadline-aware
@@ -20,8 +20,8 @@ venue:
   type: ""
   mail: "quic@ietf.org"
   arch: "https://mailarchive.ietf.org/arch/browse/quic/"
-  github: "t-aus-m/MPQUIC-deadline-aware-streams"
-  latest: "https://t-aus-m.github.io/MPQUIC-deadline-aware-streams/draft-tjohn-quic-mpquic-deadline-aware-streams.html"
+  github: "netsys-lab/mpquic-dmtp-draft"
+  latest: "https://netsys-lab.github.io/mpquic-dmtp-draft/draft-tjohn-quic-multipath-dmtp.html"
 
 author:
  -
