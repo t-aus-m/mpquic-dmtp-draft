@@ -5,7 +5,7 @@
 QUIC                                                             T. John
 Internet-Draft                                               T. Riechard
 Intended status: Informational    Otto-von-Guericke University Magdeburg
-Expires: 23 August 2025                                 19 February 2025
+Expires: 24 August 2025                                 20 February 2025
 
 
                    Deadline Aware Streams in MP-QUIC
@@ -31,11 +31,10 @@ About This Document
 
    This note is to be removed before publishing as an RFC.
 
-   The latest revision of this draft can be found at https://t-aus-
-   m.github.io/MPQUIC-deadline-aware-streams/draft-tjohn-quic-mpquic-
-   deadline-aware-streams.html.  Status information for this document
-   may be found at https://datatracker.ietf.org/doc/draft-tjohn-quic-
-   multipath-dmtp/.
+   The latest revision of this draft can be found at https://netsys-
+   lab.github.io/mpquic-dmtp-draft/draft-tjohn-quic-multipath-dmtp.html.
+   Status information for this document may be found at
+   https://datatracker.ietf.org/doc/draft-tjohn-quic-multipath-dmtp/.
 
    Discussion of this document takes place on the QUIC mailing list
    (mailto:quic@ietf.org), which is archived at
@@ -43,7 +42,7 @@ About This Document
    https://www.ietf.org/mailman/listinfo/quic/.
 
    Source for this draft and an issue tracker can be found at
-   https://github.com/t-aus-m/MPQUIC-deadline-aware-streams.
+   https://github.com/netsys-lab/mpquic-dmtp-draft.
 
 Status of This Memo
 
@@ -60,7 +59,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 23 August 2025.
+   This Internet-Draft will expire on 24 August 2025.
 
 Copyright Notice
 
@@ -152,12 +151,12 @@ Table of Contents
 
    Real-time applications often produce data blocks (e.g., video frames
    or control messages) that are only valuable if delivered before their
-   deadline.  Example use cases include: # TODO: Improve
+   deadline.  Example use cases include:
 
    *  Teleoperation and Remote Control: Robotic control or telepresence
-      systems need deterministic and low latency feedback.  Missing
-      control signals or sensor data deadlines can lead to system
-      instability or degraded user experience.
+      systems require deterministic and low latency feedback.  Missing
+      control signals, sensor data or video frame deadlines can lead to
+      system instability or degraded user experience.
 
    *  Live Streaming and Interactive Media: Latency-sensitive video or
       audio streams (e.g., for live concerts, online VR gaming, cloud
@@ -246,16 +245,18 @@ Table of Contents
 
    *  Deadline Transport Parameter: enable_deadline_aware_streams.
 
-   *  Custom Deadline Frame: DEADLINE_CONTROL to specify deadlines for
-      streams (see Section 4.2).
+   *  Custom Deadline Frame: DEADLINE_CONTROL frame to specify deadlines
+      for streams (see Section 4.2).
 
-   *  Extended Acknowledgement & Scheduling: Slight modifications or
-      additions to scheduling logic, path metrics, and congestion
-      control so that deadlines can influence decisions.
+   *  Optional DMTP Acknowledgement: DMTP_ACK frames enable more precise
+      per-path delay estimation and real-time path performance feedback
+      (see Section 4.3).
 
-   *  Optionally: new frames for measuring per-path delay more precisely
-      and an acknowledgment variant for real-time feedback (see
-      Section 4.3).
+   *  Optional AFEC Transport Parameter & Frames: If implementations
+      wish to use Adaptive FEC as in [QUIC-AFEC], it introduces an
+      additional transport parameter for FEC support and two new frames
+      for carrying source and repair symbol metadata across multiple
+      paths.
 
    By doing so, we preserve MP-QUIC’s wire format except for newly
    introduced frames and transport parameters, ensuring interoperability
@@ -319,19 +320,26 @@ Table of Contents
 
 3.3.  Adaptive Forward Error Correction (FEC)
 
-   When deadline constraints are tight and packet losses frequent, FEC
-   can reduce the risk of time-consuming retransmissions.  This
-   extension optionally uses Adaptive FEC as proposed in [QUIC-AFEC] to
-   reduce the need for retransmissions in networks with random losses.
-   When using [QUIC-AFEC], the Tag Type of the FEC_Tag MUST be set to 1
-   in order for the FEC to work in a [MP-QUIC] environment.  This
-   indicates Long Flow Usage which in turn implies that both source
-   symbol packets and repair symbol packets MUST contain the FEC_Tag
-   frame, which is necessary for matching repair symbol packets to their
-   respective source symbol packets after sending them via different
-   paths.  FEC Packets SHOULD be sent via another path than the source
-   data when multiple paths are available to de-correlate losses.  The
-   coding rate is chosen on a per-stream basis. # TODO: Improve clarity
+   When deadlines are tight and packet losses frequent, relying solely
+   on retransmissions may cause data to miss its deadline.  To mitigate
+   this risk, this extension optionally uses Adaptive FEC (AFEC) as
+   proposed in [QUIC-AFEC].  AFEC can reduce the need for
+   retransmissions, particularly in networks with random or bursty loss
+   characteristics.
+
+   When using AFEC with [MP-QUIC], the Tag Type of the FEC_Tag MUST be
+   set to 1 to indicate “Long Flow Usage.” In turn, both source symbol
+   packets and repair symbol packets MUST carry the FEC_Tag frame so
+   that repair packets can be correctly matched to their corresponding
+   source packets across different paths.
+
+   If multiple paths are available, FEC repair packets SHOULD be sent
+   over a path different from the one carrying the source data.  This
+   de-correlates losses and increases the likelihood that repair symbols
+   arrive even if other paths experience congestion or packet loss.  The
+   coding rate (i.e., the ratio of repair symbols to source symbols) MAY
+   be configured on a per-stream basis, depending on the stream’s
+   tolerance for overhead versus its deadline sensitivity.
 
 3.4.  Smart Retransmissions
 

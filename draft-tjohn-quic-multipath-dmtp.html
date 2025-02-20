@@ -1052,7 +1052,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">John &amp; Riechard</td>
-<td class="center">Expires 23 August 2025</td>
+<td class="center">Expires 24 August 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1065,12 +1065,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-tjohn-quic-multipath-dmtp-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-02-19" class="published">19 February 2025</time>
+<time datetime="2025-02-20" class="published">20 February 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-08-23">23 August 2025</time></dd>
+<dd class="expires"><time datetime="2025-08-24">24 August 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1095,7 +1095,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
       </h2>
 <p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
 <p id="section-note.1-2">
-        The latest revision of this draft can be found at <span><a href="https://t-aus-m.github.io/MPQUIC-deadline-aware-streams/draft-tjohn-quic-mpquic-deadline-aware-streams.html">https://t-aus-m.github.io/MPQUIC-deadline-aware-streams/draft-tjohn-quic-mpquic-deadline-aware-streams.html</a></span>.
+        The latest revision of this draft can be found at <span><a href="https://netsys-lab.github.io/mpquic-dmtp-draft/draft-tjohn-quic-multipath-dmtp.html">https://netsys-lab.github.io/mpquic-dmtp-draft/draft-tjohn-quic-multipath-dmtp.html</a></span>.
         Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-tjohn-quic-multipath-dmtp/">https://datatracker.ietf.org/doc/draft-tjohn-quic-multipath-dmtp/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
 <p id="section-note.1-3">
         Discussion of this document takes place on the
@@ -1103,7 +1103,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/quic/">https://mailarchive.ietf.org/arch/browse/quic/</a></span>.
         Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/quic/">https://www.ietf.org/mailman/listinfo/quic/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
 <p id="section-note.1-4">Source for this draft and an issue tracker can be found at
-        <span><a href="https://github.com/t-aus-m/MPQUIC-deadline-aware-streams">https://github.com/t-aus-m/MPQUIC-deadline-aware-streams</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+        <span><a href="https://github.com/netsys-lab/mpquic-dmtp-draft">https://github.com/netsys-lab/mpquic-dmtp-draft</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
 </section>
 <div id="status-of-memo">
 <section id="section-boilerplate.1">
@@ -1124,7 +1124,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 23 August 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 24 August 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1280,10 +1280,10 @@ svg :is([fill="white"], [fill^="#fff"]) {
         <h3 id="name-motivation-and-applications">
 <a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-motivation-and-applications" class="section-name selfRef">Motivation and Applications</a>
         </h3>
-<p id="section-1.1-1">Real-time applications often produce data blocks (e.g., video frames or control messages) that are only valuable if delivered before their deadline. Example use cases include: # TODO: Improve<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1.1-1">Real-time applications often produce data blocks (e.g., video frames or control messages) that are only valuable if delivered before their deadline. Example use cases include:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.1-2.1">
-            <p id="section-1.1-2.1.1">Teleoperation and Remote Control: Robotic control or telepresence systems need deterministic and low latency feedback. Missing control signals or sensor data deadlines can lead to system instability or degraded user experience.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.1.1">Teleoperation and Remote Control: Robotic control or telepresence systems require deterministic and low latency feedback. Missing control signals,  sensor data or video frame deadlines can lead to system instability or degraded user experience.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.2">
             <p id="section-1.1-2.2.1">Live Streaming and Interactive Media: Latency-sensitive video or audio streams (e.g., for live concerts, online VR gaming, cloud rendering) benefit from leveraging multiple paths to sustain low-latency delivery even under varying network conditions.<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
@@ -1404,13 +1404,14 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-3.1.1-2.1.1">Deadline Transport Parameter: <code>enable_deadline_aware_streams</code>.<a href="#section-3.1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.1.1-2.2">
-              <p id="section-3.1.1-2.2.1">Custom Deadline Frame: DEADLINE_CONTROL to specify deadlines for streams (see <a href="#deadline-control-frame" class="auto internal xref">Section 4.2</a>).<a href="#section-3.1.1-2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-3.1.1-2.2.1">Custom Deadline Frame: DEADLINE_CONTROL frame to specify deadlines for streams (see <a href="#deadline-control-frame" class="auto internal xref">Section 4.2</a>).<a href="#section-3.1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.1.1-2.3">
-              <p id="section-3.1.1-2.3.1">Extended Acknowledgement &amp; Scheduling: Slight modifications or additions to scheduling logic, path metrics, and congestion control so that deadlines can influence decisions.<a href="#section-3.1.1-2.3.1" class="pilcrow">¶</a></p>
+              <p id="section-3.1.1-2.3.1">Optional DMTP Acknowledgement: DMTP_ACK frames enable more precise per-path delay estimation and real-time path
+performance feedback (see <a href="#dmtp-ack-frame" class="auto internal xref">Section 4.3</a>).<a href="#section-3.1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.1.1-2.4">
-              <p id="section-3.1.1-2.4.1">Optionally: new frames for measuring per-path delay more precisely and an acknowledgment variant for real-time feedback (see <a href="#dmtp-ack-frame" class="auto internal xref">Section 4.3</a>).<a href="#section-3.1.1-2.4.1" class="pilcrow">¶</a></p>
+              <p id="section-3.1.1-2.4.1">Optional AFEC Transport Parameter &amp; Frames: If implementations wish to use Adaptive FEC as in <span>[<a href="#QUIC-AFEC" class="cite xref">QUIC-AFEC</a>]</span>, it introduces an additional transport parameter for FEC support and two new frames for carrying source and repair symbol metadata across multiple paths.<a href="#section-3.1.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 <p id="section-3.1.1-3">By doing so, we preserve MP-QUIC’s wire format except for newly introduced frames and transport parameters, ensuring interoperability with multipath-capable endpoints that do not recognize these extensions (they will treat unknown frames as errors if negotiated incorrectly, or ignore them if permitted).<a href="#section-3.1.1-3" class="pilcrow">¶</a></p>
@@ -1487,9 +1488,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-adaptive-forward-error-corr">
 <a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-adaptive-forward-error-corr" class="section-name selfRef">Adaptive Forward Error Correction (FEC)</a>
         </h3>
-<p id="section-3.3-1">When deadline constraints are tight and packet losses frequent, FEC can reduce the risk of time-consuming retransmissions. This extension optionally uses Adaptive FEC as proposed in <span>[<a href="#QUIC-AFEC" class="cite xref">QUIC-AFEC</a>]</span> to reduce the need for retransmissions in networks with random losses.
-When using <span>[<a href="#QUIC-AFEC" class="cite xref">QUIC-AFEC</a>]</span>, the Tag Type of the FEC_Tag <span class="bcp14">MUST</span> be set to 1 in order for the FEC to work in a <span>[<a href="#MP-QUIC" class="cite xref">MP-QUIC</a>]</span> environment. This indicates Long Flow Usage which in turn implies that both source symbol packets and repair symbol packets <span class="bcp14">MUST</span> contain the FEC_Tag frame, which is necessary for matching repair symbol packets to their respective source symbol packets after sending them via different paths.
-FEC Packets <span class="bcp14">SHOULD</span> be sent via another path than the source data when multiple paths are available to de-correlate losses. The coding rate is chosen on a per-stream basis. # TODO: Improve clarity<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-1">When deadlines are tight and packet losses frequent, relying solely on retransmissions may cause data to miss its deadline. To mitigate this risk, this extension optionally uses Adaptive FEC (AFEC) as proposed in <span>[<a href="#QUIC-AFEC" class="cite xref">QUIC-AFEC</a>]</span>. AFEC can reduce the need for retransmissions, particularly in networks with random or bursty loss characteristics.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-2">When using AFEC with <span>[<a href="#MP-QUIC" class="cite xref">MP-QUIC</a>]</span>, the Tag Type of the FEC_Tag <span class="bcp14">MUST</span> be set to 1 to indicate “Long Flow Usage.” In turn, both source symbol packets and repair symbol packets <span class="bcp14">MUST</span> carry the FEC_Tag frame so that repair packets can be correctly matched to their corresponding source packets across different paths.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
+<p id="section-3.3-3">If multiple paths are available, FEC repair packets <span class="bcp14">SHOULD</span> be sent over a path different from the one carrying the source data. This de-correlates losses and increases the likelihood that repair symbols arrive even if other paths experience congestion or packet loss. The coding rate (i.e., the ratio of repair symbols to source symbols) <span class="bcp14">MAY</span> be configured on a per-stream basis, depending on the stream’s tolerance for overhead versus its deadline sensitivity.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="smart-retransmissions">
