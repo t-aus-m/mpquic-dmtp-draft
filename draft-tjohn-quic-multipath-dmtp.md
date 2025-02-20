@@ -68,9 +68,9 @@ This draft specifies a minimal set of protocol extensions for MP-QUIC to exchang
 
 ## Motivation and Applications
 
-Real-time applications often produce data blocks (e.g., video frames or control messages) that are only valuable if delivered before their deadline. Example use cases include: # TODO: Improve
+Real-time applications often produce data blocks (e.g., video frames or control messages) that are only valuable if delivered before their deadline. Example use cases include:
 
-- Teleoperation and Remote Control: Robotic control or telepresence systems need deterministic and low latency feedback. Missing control signals or sensor data deadlines can lead to system instability or degraded user experience.
+- Teleoperation and Remote Control: Robotic control or telepresence systems require deterministic and low latency feedback. Missing control signals,  sensor data or video frame deadlines can lead to system instability or degraded user experience.
 - Live Streaming and Interactive Media: Latency-sensitive video or audio streams (e.g., for live concerts, online VR gaming, cloud rendering) benefit from leveraging multiple paths to sustain low-latency delivery even under varying network conditions.
 - Online Gaming: Multiplayer networked games exchange frequent, time-critical state updates. Late updates are effectively wasted, so a mechanism to drop or deprioritize old data can save bandwidth and improve real-time responsiveness.
 
@@ -119,9 +119,10 @@ The design goal is to extend MP-QUIC with minimal changes. The extensions enable
 Our extensions reuse MP-QUIC’s multipath concepts (paths, path IDs, path validation, etc.) with only the following additions:
 
 - Deadline Transport Parameter: `enable_deadline_aware_streams`.
-- Custom Deadline Frame: DEADLINE_CONTROL to specify deadlines for streams (see {{deadline-control-frame}}).
-- Extended Acknowledgement & Scheduling: Slight modifications or additions to scheduling logic, path metrics, and congestion control so that deadlines can influence decisions.
-- Optionally: new frames for measuring per-path delay more precisely and an acknowledgment variant for real-time feedback (see {{dmtp-ack-frame}}).
+- Custom Deadline Frame: DEADLINE_CONTROL frame to specify deadlines for streams (see {{deadline-control-frame}}).
+- Optional DMTP Acknowledgement: DMTP_ACK frames enable more precise per-path delay estimation and real-time path
+performance feedback (see {{dmtp-ack-frame}}).
+- Optional AFEC Transport Parameter & Frames: If implementations wish to use Adaptive FEC as in {{QUIC-AFEC}}, it introduces an additional transport parameter for FEC support and two new frames for carrying source and repair symbol metadata across multiple paths.
 
 By doing so, we preserve MP-QUIC’s wire format except for newly introduced frames and transport parameters, ensuring interoperability with multipath-capable endpoints that do not recognize these extensions (they will treat unknown frames as errors if negotiated incorrectly, or ignore them if permitted).
 
@@ -154,9 +155,11 @@ The specific behavior is implementation-specific and MAY be configurable by the 
 
 ## Adaptive Forward Error Correction (FEC)
 
-When deadline constraints are tight and packet losses frequent, FEC can reduce the risk of time-consuming retransmissions. This extension optionally uses Adaptive FEC as proposed in {{QUIC-AFEC}} to reduce the need for retransmissions in networks with random losses.
-When using {{QUIC-AFEC}}, the Tag Type of the FEC_Tag MUST be set to 1 in order for the FEC to work in a {{MP-QUIC}} environment. This indicates Long Flow Usage which in turn implies that both source symbol packets and repair symbol packets MUST contain the FEC_Tag frame, which is necessary for matching repair symbol packets to their respective source symbol packets after sending them via different paths.
-FEC Packets SHOULD be sent via another path than the source data when multiple paths are available to de-correlate losses. The coding rate is chosen on a per-stream basis. # TODO: Improve clarity
+When deadlines are tight and packet losses frequent, relying solely on retransmissions may cause data to miss its deadline. To mitigate this risk, this extension optionally uses Adaptive FEC (AFEC) as proposed in {{QUIC-AFEC}}. AFEC can reduce the need for retransmissions, particularly in networks with random or bursty loss characteristics.
+
+When using AFEC with {{MP-QUIC}}, the Tag Type of the FEC_Tag MUST be set to 1 to indicate “Long Flow Usage.” In turn, both source symbol packets and repair symbol packets MUST carry the FEC_Tag frame so that repair packets can be correctly matched to their corresponding source packets across different paths.
+
+If multiple paths are available, FEC repair packets SHOULD be sent over a path different from the one carrying the source data. This de-correlates losses and increases the likelihood that repair symbols arrive even if other paths experience congestion or packet loss. The coding rate (i.e., the ratio of repair symbols to source symbols) MAY be configured on a per-stream basis, depending on the stream’s tolerance for overhead versus its deadline sensitivity.
 
 ## Smart Retransmissions
 
