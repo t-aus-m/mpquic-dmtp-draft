@@ -9,14 +9,14 @@ date:
 consensus: true
 v: 3
 area: ""
-workgroup: "QUIC"
+workgroup: ""
 keyword:
  - deadline-aware
  - multipath
  - scheduling
  - path aware networks
 venue:
-  group: "QUIC"
+  group: "quic"
   type: ""
   mail: "quic@ietf.org"
   arch: "https://mailarchive.ietf.org/arch/browse/quic/"
@@ -39,16 +39,18 @@ normative:
    MP-QUIC: I-D.draft-ietf-quic-multipath
    QUIC-AFEC: I-D.draft-dmoskvitin-quic-adaptive-fec
    RFC3339:
+   RFC9473:
 
 informative:
    DMTP: DOI.10.23919/IFIPNetworking57963.2023.10186417
-   SCION: DOI.10.1007/978-3-031-05288-0
+   SCION: I-D.draft-dekater-scion-controlplane-07
    QUIC-DTP: I-D.draft-shi-quic-dtp
+   SR: RFC8402
 
 
 --- abstract
 
-This document proposes the Deadline-aware Multipath Transport Protocol (DMTP) concept as an extension to the Multipath extension of QUIC (MP-QUIC). This extension aims to support data streams with strict latency requirements by enabling the signaling of per-stream deadlines and by combining multipath scheduling, congestion control adaptations, and optional forward error correction (FEC). Furthermore, by abstracting the different end-to-end paths available in a Path Aware Network (PAN) such as SCION into MP-QUIC's path identifiers, we allow an application to select its preferred paths while maintaining interoperability with standard MP-QUIC endpoints. This new mechanism provides a standardized way for endpoints to exchange and schedule deadline-aware streams across multiple network paths.
+This document proposes the Deadline-aware Multipath Transport Protocol (DMTP) concept as an extension to the Multipath extension of QUIC (MP-QUIC). This extension aims to support data streams with strict latency requirements by enabling the signaling of per-stream deadlines and by combining multipath scheduling, congestion control adaptations, and optional forward error correction (FEC). Furthermore, by abstracting the different end-to-end paths available in a Path Aware Network (PAN) such as SCION into MP-QUIC's path identifiers, we allow an application to select its preferred paths while maintaining interoperability with standard MP-QUIC endpoints. This new mechanism allows endpoints to exchange and schedule deadline-aware streams across multiple network paths.
 
 --- middle
 
@@ -62,9 +64,9 @@ By integrating deadline-aware concepts into MP-QUIC, we seek to enable:
 
 1. Multipath streams with Deadlines: Scheduling and transmitting data across multiple paths, with per-stream deadlines that inform scheduling decisions.
 2. Option for Path-Aware Networking: Abstracting path selection from Path-Aware Networks (e.g., {{SCION}}) by mapping each potential path to an MP-QUIC path identifier.
-3. Deadline-Based Retransmission / FEC: Combining optional adaptive FEC (such as {{QUIC-AFEC}}) and “smart” retransmissions only when there is time left to meet the deadline.
+3. Deadline-Based Retransmission / FEC: Combining optional adaptive FEC (such as {{QUIC-AFEC}}) and "smart" retransmissions only when there is time left to meet the deadline.
 
-This draft specifies a minimal set of protocol extensions for MP-QUIC to exchange deadline information at the transport layer, so that endpoints can coordinate scheduling for multipath transmissions with strict time constraints. It allows different implementations to interoperate and exchange deadline-aware streams over MP-QUIC.
+This draft specifies a minimal set of protocol extensions for MP-QUIC to exchange deadline information at the transport layer, so that endpoints can coordinate scheduling for multipath transmissions with strict time constraints. As the first version of our proposal, our goal is to gather community feedback and gauge interest to guide future refinements.
 
 ## Motivation and Applications
 
@@ -81,7 +83,7 @@ Real-time applications often produce data blocks (e.g., video frames or control 
 
 Within this document:
 - "Deadline-aware streams" refers to streams in which an application indicates a time by which data must be delivered, beyond which data is no longer useful.
-- "Path" aligns with the MP-QUIC concept: each path is identified by a unique Path ID, referencing a specific combination of source and destination IP:port tuples or multiple distinct end-to-end routes in a path-aware network architecture.
+- "Path" aligns with the MP-QUIC concept: each path is identified by a unique Path ID and it may reference a specific combination of source and destination IP:port tuples or multiple paths within a path aware network, as defined by {{RFC9473}}.
 
 # Design Overview
 
@@ -114,21 +116,24 @@ The design goal is to extend MP-QUIC with minimal changes. The extensions enable
    - Signal deadline misses to the application layer
    - Allow applications to specify handling of missed deadlines
 
-### Minimal Changes to MP-QUIC
+### Extensions to MP-QUIC
 
-Our extensions reuse MP-QUIC’s multipath concepts (paths, path IDs, path validation, etc.) with only the following additions:
+Our extensions build on {{MP-QUIC}}'s multipath framework (e.g., paths, path IDs, and validation) and add only:
 
-- Deadline Transport Parameter: `enable_deadline_aware_streams`.
-- Custom Deadline Frame: DEADLINE_CONTROL frame to specify deadlines for streams (see {{deadline-control-frame}}).
-- Optional DMTP Acknowledgement: DMTP_ACK frames enable more precise per-path delay estimation and real-time path
-performance feedback (see {{dmtp-ack-frame}}).
-- Optional AFEC Transport Parameter & Frames: If implementations wish to use Adaptive FEC as in {{QUIC-AFEC}}, it introduces an additional transport parameter for FEC support and two new frames for carrying source and repair symbol metadata across multiple paths.
+- A transport Parameter to enable deadline-aware streams.
+- A DEADLINE_CONTROL frame to signal stream deadlines.
+- Optional DMTP_ACK frame for improved per-path delay feedback.
+- Optional AFEC support via an extra transport parameter and two frames for source and repair symbol metadata.
 
-By doing so, we preserve MP-QUIC’s wire format except for newly introduced frames and transport parameters, ensuring interoperability with multipath-capable endpoints that do not recognize these extensions (they will treat unknown frames as errors if negotiated incorrectly, or ignore them if permitted).
+This preserves the original wire format, ensuring interoperability with {{MP-QUIC}} endpoints that do not implement these extensions.
 
-### Path Selection in Path-Aware Networks (PAN)
+## Support for Path-Aware Networks (PAN)
 
-When running over a Path-Aware Network such as {{SCION}}, endpoints may discover multiple disjoint or partially disjoint paths. In SCION, a host can receive multiple end-to-end path options from the network. We leverage MP-QUIC’s concept of multiple path IDs to represent each distinct path from the SCION set. This means that SCION’s path selection is performed outside of MP-QUIC, but MP-QUIC uses the resulting IP:port tuples (plus path ID) to treat each route as a separate path. The advantage is that no additional MP-QUIC modifications are needed to “support SCION” - we simply map each SCION path to a separate MP-QUIC path ID and rely on our new deadline-aware logic to decide scheduling and retransmissions.
+When operating over a path-aware network, endpoints can discover and utilize multiple disjoint or partially disjoint paths. This can be provided, for example, by {{SCION}} or other architectures such as {{SR}}. In such an environment, a single source–destination address pair may yield multiple distinct end-to-end paths, each with unique performance characteristics (e.g., latency, loss rate). These paths can be exposed to the transport layer via distinct Path IDs in {{MP-QUIC}}.
+
+This document does not prescribe how endpoints discover and enumerate available paths at the network layer. Rather, it assumes that a PAN can supply multiple viable routes between endpoints. Once discovered, each route is mapped to a unique Path ID, enabling the {{DMTP}} scheduling logic to treat them as distinct transport paths for deadline-aware streams.
+
+Multiple paths and path diversity provided by PAN enhance the effectiveness of {{DMTP}}'s scheduling, retransmission, and optional FEC mechanisms in meeting strict deadlines, making support for PAN essential to the design of the proposed extension.
 
 ## Deadlines
 
@@ -157,13 +162,13 @@ The specific behavior is implementation-specific and MAY be configurable by the 
 
 When deadlines are tight and packet losses frequent, relying solely on retransmissions may cause data to miss its deadline. To mitigate this risk, this extension optionally uses Adaptive FEC (AFEC) as proposed in {{QUIC-AFEC}}. AFEC can reduce the need for retransmissions, particularly in networks with random or bursty loss characteristics.
 
-When using AFEC with {{MP-QUIC}}, the Tag Type of the FEC_Tag MUST be set to 1 to indicate “Long Flow Usage.” In turn, both source symbol packets and repair symbol packets MUST carry the FEC_Tag frame so that repair packets can be correctly matched to their corresponding source packets across different paths.
+When using AFEC with {{MP-QUIC}}, the Tag Type of the FEC_Tag MUST be set to 1 to indicate "Long Flow Usage". In turn, both source symbol packets and repair symbol packets MUST carry the FEC_Tag frame so that repair packets can be correctly matched to their corresponding source packets across different paths.
 
-If multiple paths are available, FEC repair packets SHOULD be sent over a path different from the one carrying the source data. This de-correlates losses and increases the likelihood that repair symbols arrive even if other paths experience congestion or packet loss. The coding rate (i.e., the ratio of repair symbols to source symbols) MAY be configured on a per-stream basis, depending on the stream’s tolerance for overhead versus its deadline sensitivity.
+If multiple paths are available, FEC repair packets SHOULD be sent over a path different from the one carrying the source data. This de-correlates losses and increases the likelihood that repair symbols arrive even if other paths experience congestion or packet loss. The coding rate (i.e., the ratio of repair symbols to source symbols) MAY be configured on a per-stream basis, depending on the stream's tolerance for overhead versus its deadline sensitivity.
 
 ## Smart Retransmissions
 
-Smart retransmissions in a deadline-aware context mean that lost frames are only retransmitted if there is still enough time left to meet the deadline via one or more paths. The sender computes whether the frames can arrive on time, factoring in the path’s estimated one-way delay or RTT. If not, the sender discards the frames rather than wasting congestion window or scheduling capacity.
+Smart retransmissions in a deadline-aware context mean that lost frames are only retransmitted if there is still enough time left to meet the deadline via one or more paths. The sender computes whether the frames can arrive on time, factoring in the path's estimated one-way delay or RTT. If not, the sender discards the frames rather than wasting congestion window or scheduling capacity.
 
 ## Path Metrics
 
@@ -175,18 +180,18 @@ To schedule traffic effectively, the sender should gather:
 
 ### Per Path Delay
 
-A crucial metric for DMTP is the one-way or round-trip delay of each path. This is used to decide whether a new or retransmitted packet can arrive before its deadline. In a path-aware network like {{SCION}}, the one-way delay might be advertised or inferred from routing information. Otherwise, endpoints measure RTT or one-way delay themselves.
+A crucial metric for DMTP is the one-way or round-trip delay of each path. This is used to decide whether a new or retransmitted packet can arrive before its deadline. In a path-aware network, the one-way delay might be advertised or inferred from routing information. Otherwise, endpoints measure RTT or one-way delay themselves.
 
 For accurate one-way delay measurements, endpoints MAY use synchronized clocks; if full clock sync is not feasible, a fallback to round-trip time measurements is still acceptable. The DMTP_ACK frame (see {{dmtp-ack-frame}}) is introduced primarily for improved delay tracking.
 
 ### Gathering Path Metrics
 
-1. Path-Aware Networks (e.g. SCION) might provide direct metrics, such as path latency or bandwidth as part of path metadata.
+1. Path-Aware Networks might provide direct metrics, such as path latency or bandwidth as part of path metadata.
 2. Active Probing: If the underlying network does not provide metrics, the endpoint MAY send periodic PING frames or small test packets along each active path.
 3. Path Measurement Frames: This draft introduces an optional DMTP_ACK frame ({{dmtp-ack-frame}}) for deeper path measurements, including timestamps of packet receipts to estimate per path one-way delay.
-4. Congestion windows, RTT estimates, and packet loss detection from MP-QUIC’s standard loss recovery can inform scheduling.
+4. Congestion windows, RTT estimates, and packet loss detection from {{MP-QUIC}}'s standard loss recovery can inform scheduling.
 
-# Extension of Multipath QUIC
+# Extension to Multipath QUIC
 
 This extension builds upon {{MP-QUIC}}. Below we list the protocol additions and modifications. Unless otherwise noted, all rules of MP-QUIC remain.
 
@@ -265,12 +270,12 @@ This extension retains all the security features and considerations of {{QUIC}},
 Nevertheless, it introduces additional considerations:
 
 - Deadline Signaling: Knowledge of deadlines or priorities may be sensitive if it reveals application timing patterns or critical data intervals. Implementations SHOULD carefully handle metadata (e.g., by encrypting frames in 1-RTT packets).
-- Resource Exhaustion and Flooding: The ability to manage multiple concurrent paths and to schedule or drop data based on deadlines must not weaken QUIC’s anti-amplification measures. Endpoints MUST still follow QUIC path validation procedures, ensuring that an attacker cannot exploit deadline-aware frames to amplify traffic.
+- Resource Exhaustion and Flooding: The ability to manage multiple concurrent paths and to schedule or drop data based on deadlines must not weaken QUIC's anti-amplification measures. Endpoints MUST still follow QUIC path validation procedures, ensuring that an attacker cannot exploit deadline-aware frames to amplify traffic.
 - When employing DMTP_ACK frames for one-way delay measurement with clock synchronization, the clock synchronization must also be secured. Otherwise, an attacker injecting false timestamps could mislead scheduling. Endpoints that rely heavily on these measurements should be aware of that risk and possibly cross-check with measured RTT or other heuristics.
 
 # IANA Considerations
 
-This document defines a new transport parameter for the negotiation of enable multiple paths for QUIC, and two new frame types. The draft defines provisional values for experiments, but we expect IANA to allocate short values if the draft is approved.
+This document defines a new transport parameter for the negotiation of enable multiple paths for QUIC, and two new frame types. The draft defines provisional values for experiments.
 
 The following entry in {{transport-parameters}} should be added to the "QUIC Transport Parameters" registry under the "QUIC Protocol" heading.
 
@@ -279,7 +284,7 @@ Value                                         | Parameter Name.   | Specificatio
 TBD                                           | enable_deadline_aware_streams  | {{transport-parameter}}
 {: #transport-parameters title="Addition to QUIC Transport Parameters Entries"}
 
-The following frame type defined in {{frame-types}} should be added to
+The following frame types defined in {{frame-types}} should be added to
 the "QUIC Frame Types" registry under the "QUIC Protocol" heading.
 
 Value                                              | Frame Name          | Specification
