@@ -50,31 +50,31 @@ informative:
 
 --- abstract
 
-This document proposes the Deadline-aware Multipath Transport Protocol (DMTP) concept as an extension to the Multipath extension of QUIC (MP-QUIC). This extension aims to support data streams with strict latency requirements by enabling the signaling of per-stream deadlines and by combining multipath scheduling, congestion control adaptations, and optional forward error correction (FEC). Furthermore, by abstracting the different end-to-end paths available in a Path Aware Network (PAN) such as SCION into MP-QUIC's path identifiers, we allow an application to select its preferred paths while maintaining interoperability with standard MP-QUIC endpoints. This new mechanism allows endpoints to exchange and schedule deadline-aware streams across multiple network paths.
+This document proposes the Deadline-aware Multipath Transport Protocol (DMTP) concept as an extension to the Multipath Extension for QUIC (MP-QUIC). This extension aims to support data streams with strict latency requirements by enabling the signaling of a stream's deadline and by combining multipath scheduling, congestion control adaptations, and optional forward error correction (FEC). Moreover, DMTP leverages MP-QUIC's path identifiers to distinguish different end-to-end paths as they may be offered in a Path Aware Network (PAN) such as SCION. This allows an application to select its preferred paths while maintaining interoperability with standard MP-QUIC endpoints. In combination, DMTP enables endpoints to exchange and schedule deadline-aware streams across multiple network paths.
 
 --- middle
 
 # Introduction
 
-The Multipath Extension of QUIC {{MP-QUIC}} enhances performance by simultaneously utilizing multiple paths between endpoints. However, it currently lacks direct mechanisms to meet per-stream deadline requirements, which are increasingly important for real-time applications such as teleoperation, live video streaming, and interactive gaming. These applications demand low and bounded latency, and can often tolerate partial or no retransmission of late data.
+The Multipath Extension for QUIC {{MP-QUIC}} enhances performance by simultaneously utilizing multiple paths between endpoints. However, MP-QUIC currently lacks support for strict deadline requirements of real-time applications such as teleoperation, live video streaming, or interactive gaming, which are becoming increasingly important. These applications demand low and bounded latency, and can often tolerate no or only partial retransmission of missing data.
 
-Previous work on deadline-aware protocols for QUIC includes a single-path approach, namely Deadline-aware Transport Protocol {{QUIC-DTP}}, that introduced per-stream deadlines but did not exploit multipath capabilities. Meanwhile, our conference paper proposing DMTP {{DMTP}} highlighted how taking advantage of multiple paths, combined with forward error correction (FEC) and intelligent retransmissions, can significantly increase the fraction of packets meeting their deadlines, especially over lossy or high-latency links.
+Previous work on deadline-aware protocols for QUIC includes the Deadline-aware Transport Protocol {{QUIC-DTP}}, a single-path approach that introduced deadlines for streams but did not exploit multipath capabilities. Meanwhile, our DMTP {{DMTP}} approach allows to take advantage of multiple paths, combined with forward error correction (FEC) and intelligent retransmissions, to significantly increase the fraction of packets meeting their deadlines, especially in the presense of lossy or high-latency links.
 
 By integrating deadline-aware concepts into MP-QUIC, we seek to enable:
 
-1. Multipath streams with Deadlines: Scheduling and transmitting data across multiple paths, with per-stream deadlines that inform scheduling decisions.
-2. Option for Path-Aware Networking: Abstracting path selection from Path-Aware Networks (e.g., {{SCION}}) by mapping each potential path to an MP-QUIC path identifier.
-3. Deadline-Based Retransmission / FEC: Combining optional adaptive FEC (such as {{QUIC-AFEC}}) and "smart" retransmissions only when there is time left to meet the deadline.
+1. Multipath streams with Deadlines: Scheduling and transmitting data across multiple paths, with strict deadlines of streams driving scheduling decisions.
+2. Option for Path-Aware Networking: Support for path selection as offered in Path Aware Networks (e.g., {{SCION}}) by mapping each potential path to an MP-QUIC path identifier.
+3. Deadline-Based Retransmission / FEC: Combining optional adaptive FEC (such as {{QUIC-AFEC}}) and "smart" retransmissions only when there may still be time left to meet the deadline.
 
 This draft specifies a minimal set of protocol extensions for MP-QUIC to exchange deadline information at the transport layer, so that endpoints can coordinate scheduling for multipath transmissions with strict time constraints. As the first version of our proposal, our goal is to gather community feedback and gauge interest to guide future refinements.
 
 ## Motivation and Applications
 
-Real-time applications often produce data blocks (e.g., video frames or control messages) that are only valuable if delivered before their deadline. Example use cases include:
+Real-time applications often produce data blocks (e.g., video frames or control messages) that are only valuable if delivered before a specific deadline. Example use cases include:
 
-- Teleoperation and Remote Control: Robotic control or telepresence systems require deterministic and low latency feedback. Missing control signals,  sensor data or video frame deadlines can lead to system instability or degraded user experience.
+- Teleoperation and Remote Control: Robotic control or telepresence systems require deterministic and low latency feedback. Missed control signals, sensor data or video frame deadlines can lead to system instability or degraded user experience.
 - Live Streaming and Interactive Media: Latency-sensitive video or audio streams (e.g., for live concerts, online VR gaming, cloud rendering) benefit from leveraging multiple paths to sustain low-latency delivery even under varying network conditions.
-- Online Gaming: Multiplayer networked games exchange frequent, time-critical state updates. Late updates are effectively wasted, so a mechanism to drop or deprioritize old data can save bandwidth and improve real-time responsiveness.
+- Online Gaming: Multiplayer networked games exchange frequent, time-critical state updates. Late updates are effectively wasted, so an approach to drop or deprioritize old data can save bandwidth and improve real-time responsiveness.
 
 
 # Conventions and Definitions
@@ -83,17 +83,17 @@ Real-time applications often produce data blocks (e.g., video frames or control 
 
 Within this document:
 - "Deadline-aware streams" refers to streams in which an application indicates a time by which data must be delivered, beyond which data is no longer useful.
-- "Path" aligns with the MP-QUIC concept: each path is identified by a unique Path ID and it may reference a specific combination of source and destination IP:port tuples or multiple paths within a path aware network, as defined by {{RFC9473}}.
+- "Path" aligns with the MP-QUIC concept: each path is identified by a unique Path ID and it may reference a specific combination of source and destination IP:port tuples or multiple paths as they may be offered in a path aware network, as defined by {{RFC9473}}.
 
 # Design Overview
 
 ## Integrating Deadline-Aware Streams into MP-QUIC
 
-The design goal is to extend MP-QUIC with minimal changes. The extensions enable endpoints to signal per-stream deadlines. Implementations that support deadline-aware streams MUST implement:
+Our design goal is to extend MP-QUIC with minimal changes. The proposed extension enables endpoints to signal a stream's deadline. Implementations that support deadline-aware streams MUST implement:
 
 1. Path Selection: Select paths for transmitting frames, retransmissions and acknowledgements based on metrics relevant to meeting deadlines, including:
    - Path latency measurements
-   - Available bandwidth estimation
+   - Estimation of available bandwidth
    - Observed packet loss rates
 
 2. Packet Scheduling: Implement scheduling algorithms that:
@@ -120,9 +120,9 @@ The design goal is to extend MP-QUIC with minimal changes. The extensions enable
 
 Our extensions build on {{MP-QUIC}}'s multipath framework (e.g., paths, path IDs, and validation) and add only:
 
-- A transport Parameter to enable deadline-aware streams.
+- A transport parameter to enable deadline-aware streams.
 - A DEADLINE_CONTROL frame to signal stream deadlines.
-- Optional DMTP_ACK frame for improved per-path delay feedback.
+- An optional DMTP_ACK frame for improved per-path delay feedback.
 - Optional AFEC support via an extra transport parameter and two frames for source and repair symbol metadata.
 
 This preserves the original wire format, ensuring interoperability with {{MP-QUIC}} endpoints that do not implement these extensions.
@@ -139,7 +139,7 @@ Multiple paths and path diversity provided by PAN enhance the effectiveness of {
 
 ### Signalling Deadlines
 
-To signal deadlines, endpoints use the DEADLINE_CONTROL frame (see {{deadline-control-frame}}). This frame associates a specific deadline with a stream, indicating the relative time by which the data should be delivered.
+To signal deadlines, endpoints use the DEADLINE_CONTROL frame (see {{deadline-control-frame}}). This frame associates a specific deadline with a stream, indicating the relative time by when the data should be delivered.
 
 ### Deadline Semantics
 
