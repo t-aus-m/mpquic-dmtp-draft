@@ -35,11 +35,6 @@ About This Document
    Status information for this document may be found at
    https://datatracker.ietf.org/doc/draft-tjohn-quic-multipath-dmtp/.
 
-   Discussion of this document takes place on the quic mailing list
-   (mailto:quic@ietf.org), which is archived at
-   https://mailarchive.ietf.org/arch/browse/quic/.  Subscribe at
-   https://www.ietf.org/mailman/listinfo/quic/.
-
    Source for this draft and an issue tracker can be found at
    https://github.com/netsys-lab/mpquic-dmtp-draft.
 
