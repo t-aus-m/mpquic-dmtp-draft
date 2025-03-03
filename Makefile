@@ -1,3 +1,5 @@
+export UPLOAD_EMAIL ?= tony.john@ovgu.de
+
 LIBDIR := lib
 include $(LIBDIR)/main.mk
 
