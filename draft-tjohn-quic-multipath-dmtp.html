@@ -8,16 +8,16 @@
 <meta content="Tony John" name="author">
 <meta content="Till-Frederik Riechard" name="author">
 <meta content="
-       This document proposes the Deadline-aware Multipath Transport Protocol (DMTP) concept as an extension to the Multipath extension of QUIC (MP-QUIC). This extension aims to support data streams with strict latency requirements by enabling the signaling of per-stream deadlines and by combining multipath scheduling, congestion control adaptations, and optional forward error correction (FEC). Furthermore, by abstracting the different end-to-end paths available in a Path Aware Network (PAN) such as SCION into MP-QUIC's path identifiers, we allow an application to select its preferred paths while maintaining interoperability with standard MP-QUIC endpoints. This new mechanism allows endpoints to exchange and schedule deadline-aware streams across multiple network paths. 
+       This document proposes the Deadline-aware Multipath Transport Protocol (DMTP) concept as an extension to the Multipath Extension for QUIC (MP-QUIC). This extension aims to support data streams with strict latency requirements by enabling the signaling of a stream's deadline and by combining multipath scheduling, congestion control adaptations, and optional forward error correction (FEC). Moreover, DMTP leverages MP-QUIC's path identifiers to distinguish different end-to-end paths as they may be offered in a Path Aware Network (PAN) such as SCION. This allows an application to select its preferred paths while maintaining interoperability with standard MP-QUIC endpoints. In combination, DMTP enables endpoints to exchange and schedule deadline-aware streams across multiple network paths. 
     " name="description">
-<meta content="xml2rfc 3.27.0" name="generator">
+<meta content="xml2rfc 3.28.0" name="generator">
 <meta content="deadline-aware" name="keyword">
 <meta content="multipath" name="keyword">
 <meta content="scheduling" name="keyword">
 <meta content="path aware networks" name="keyword">
 <meta content="draft-tjohn-quic-multipath-dmtp-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.27.0
+  xml2rfc 3.28.0
     Python 3.12.9
     ConfigArgParse 1.7
     google-i18n-address 3.1.1
@@ -1048,11 +1048,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">Deadline Aware Streams in MP-QUIC</td>
-<td class="right">February 2025</td>
+<td class="right">March 2025</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">John &amp; Riechard</td>
-<td class="center">Expires 28 August 2025</td>
+<td class="center">Expires 4 September 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1065,12 +1065,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-tjohn-quic-multipath-dmtp-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-02-24" class="published">24 February 2025</time>
+<time datetime="2025-03-03" class="published">3 March 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-08-28">28 August 2025</time></dd>
+<dd class="expires"><time datetime="2025-09-04">4 September 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1087,7 +1087,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">Deadline Aware Streams in MP-QUIC</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document proposes the Deadline-aware Multipath Transport Protocol (DMTP) concept as an extension to the Multipath extension of QUIC (MP-QUIC). This extension aims to support data streams with strict latency requirements by enabling the signaling of per-stream deadlines and by combining multipath scheduling, congestion control adaptations, and optional forward error correction (FEC). Furthermore, by abstracting the different end-to-end paths available in a Path Aware Network (PAN) such as SCION into MP-QUIC's path identifiers, we allow an application to select its preferred paths while maintaining interoperability with standard MP-QUIC endpoints. This new mechanism allows endpoints to exchange and schedule deadline-aware streams across multiple network paths.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document proposes the Deadline-aware Multipath Transport Protocol (DMTP) concept as an extension to the Multipath Extension for QUIC (MP-QUIC). This extension aims to support data streams with strict latency requirements by enabling the signaling of a stream's deadline and by combining multipath scheduling, congestion control adaptations, and optional forward error correction (FEC). Moreover, DMTP leverages MP-QUIC's path identifiers to distinguish different end-to-end paths as they may be offered in a Path Aware Network (PAN) such as SCION. This allows an application to select its preferred paths while maintaining interoperability with standard MP-QUIC endpoints. In combination, DMTP enables endpoints to exchange and schedule deadline-aware streams across multiple network paths.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1124,7 +1124,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 28 August 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 4 September 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1260,18 +1260,18 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">The Multipath Extension of QUIC <span>[<a href="#MP-QUIC" class="cite xref">MP-QUIC</a>]</span> enhances performance by simultaneously utilizing multiple paths between endpoints. However, it currently lacks direct mechanisms to meet per-stream deadline requirements, which are increasingly important for real-time applications such as teleoperation, live video streaming, and interactive gaming. These applications demand low and bounded latency, and can often tolerate partial or no retransmission of late data.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">Previous work on deadline-aware protocols for QUIC includes a single-path approach, namely Deadline-aware Transport Protocol <span>[<a href="#QUIC-DTP" class="cite xref">QUIC-DTP</a>]</span>, that introduced per-stream deadlines but did not exploit multipath capabilities. Meanwhile, our conference paper proposing DMTP <span>[<a href="#DMTP" class="cite xref">DMTP</a>]</span> highlighted how taking advantage of multiple paths, combined with forward error correction (FEC) and intelligent retransmissions, can significantly increase the fraction of packets meeting their deadlines, especially over lossy or high-latency links.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-1">The Multipath Extension for QUIC <span>[<a href="#MP-QUIC" class="cite xref">MP-QUIC</a>]</span> enhances performance by simultaneously utilizing multiple paths between endpoints. However, MP-QUIC currently lacks support for strict deadline requirements of real-time applications such as teleoperation, live video streaming, or interactive gaming, which are becoming increasingly important. These applications demand low and bounded latency, and can often tolerate no or only partial retransmission of missing data.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">Previous work on deadline-aware protocols for QUIC includes the Deadline-aware Transport Protocol <span>[<a href="#QUIC-DTP" class="cite xref">QUIC-DTP</a>]</span>, a single-path approach that introduced deadlines for streams but did not exploit multipath capabilities. Meanwhile, our DMTP <span>[<a href="#DMTP" class="cite xref">DMTP</a>]</span> approach allows to take advantage of multiple paths, combined with forward error correction (FEC) and intelligent retransmissions, to significantly increase the fraction of packets meeting their deadlines, especially in the presense of lossy or high-latency links.<a href="#section-1-2" class="pilcrow">¶</a></p>
 <p id="section-1-3">By integrating deadline-aware concepts into MP-QUIC, we seek to enable:<a href="#section-1-3" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-1-4">
 <li id="section-1-4.1">
-          <p id="section-1-4.1.1">Multipath streams with Deadlines: Scheduling and transmitting data across multiple paths, with per-stream deadlines that inform scheduling decisions.<a href="#section-1-4.1.1" class="pilcrow">¶</a></p>
+          <p id="section-1-4.1.1">Multipath streams with Deadlines: Scheduling and transmitting data across multiple paths, with strict deadlines of streams driving scheduling decisions.<a href="#section-1-4.1.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-1-4.2">
-          <p id="section-1-4.2.1">Option for Path-Aware Networking: Abstracting path selection from Path-Aware Networks (e.g., <span>[<a href="#SCION" class="cite xref">SCION</a>]</span>) by mapping each potential path to an MP-QUIC path identifier.<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
+          <p id="section-1-4.2.1">Option for Path-Aware Networking: Support for path selection as offered in Path Aware Networks (e.g., <span>[<a href="#SCION" class="cite xref">SCION</a>]</span>) by mapping each potential path to an MP-QUIC path identifier.<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-1-4.3">
-          <p id="section-1-4.3.1">Deadline-Based Retransmission / FEC: Combining optional adaptive FEC (such as <span>[<a href="#QUIC-AFEC" class="cite xref">QUIC-AFEC</a>]</span>) and "smart" retransmissions only when there is time left to meet the deadline.<a href="#section-1-4.3.1" class="pilcrow">¶</a></p>
+          <p id="section-1-4.3.1">Deadline-Based Retransmission / FEC: Combining optional adaptive FEC (such as <span>[<a href="#QUIC-AFEC" class="cite xref">QUIC-AFEC</a>]</span>) and "smart" retransmissions only when there may still be time left to meet the deadline.<a href="#section-1-4.3.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
 <p id="section-1-5">This draft specifies a minimal set of protocol extensions for MP-QUIC to exchange deadline information at the transport layer, so that endpoints can coordinate scheduling for multipath transmissions with strict time constraints. As the first version of our proposal, our goal is to gather community feedback and gauge interest to guide future refinements.<a href="#section-1-5" class="pilcrow">¶</a></p>
@@ -1280,16 +1280,16 @@ svg :is([fill="white"], [fill^="#fff"]) {
         <h3 id="name-motivation-and-applications">
 <a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-motivation-and-applications" class="section-name selfRef">Motivation and Applications</a>
         </h3>
-<p id="section-1.1-1">Real-time applications often produce data blocks (e.g., video frames or control messages) that are only valuable if delivered before their deadline. Example use cases include:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1.1-1">Real-time applications often produce data blocks (e.g., video frames or control messages) that are only valuable if delivered before a specific deadline. Example use cases include:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.1-2.1">
-            <p id="section-1.1-2.1.1">Teleoperation and Remote Control: Robotic control or telepresence systems require deterministic and low latency feedback. Missing control signals,  sensor data or video frame deadlines can lead to system instability or degraded user experience.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.1.1">Teleoperation and Remote Control: Robotic control or telepresence systems require deterministic and low latency feedback. Missed control signals, sensor data or video frame deadlines can lead to system instability or degraded user experience.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.2">
             <p id="section-1.1-2.2.1">Live Streaming and Interactive Media: Latency-sensitive video or audio streams (e.g., for live concerts, online VR gaming, cloud rendering) benefit from leveraging multiple paths to sustain low-latency delivery even under varying network conditions.<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.3">
-            <p id="section-1.1-2.3.1">Online Gaming: Multiplayer networked games exchange frequent, time-critical state updates. Late updates are effectively wasted, so a mechanism to drop or deprioritize old data can save bandwidth and improve real-time responsiveness.<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.3.1">Online Gaming: Multiplayer networked games exchange frequent, time-critical state updates. Late updates are effectively wasted, so an approach to drop or deprioritize old data can save bandwidth and improve real-time responsiveness.<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1307,7 +1307,7 @@ described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</s
 appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
 <p id="section-2-2">Within this document:
 - "Deadline-aware streams" refers to streams in which an application indicates a time by which data must be delivered, beyond which data is no longer useful.
-- "Path" aligns with the MP-QUIC concept: each path is identified by a unique Path ID and it may reference a specific combination of source and destination IP:port tuples or multiple paths within a path aware network, as defined by <span>[<a href="#RFC9473" class="cite xref">RFC9473</a>]</span>.<a href="#section-2-2" class="pilcrow">¶</a></p>
+- "Path" aligns with the MP-QUIC concept: each path is identified by a unique Path ID and it may reference a specific combination of source and destination IP:port tuples or multiple paths as they may be offered in a path aware network, as defined by <span>[<a href="#RFC9473" class="cite xref">RFC9473</a>]</span>.<a href="#section-2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="design-overview">
@@ -1320,7 +1320,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-integrating-deadline-aware-">
 <a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-integrating-deadline-aware-" class="section-name selfRef">Integrating Deadline-Aware Streams into MP-QUIC</a>
         </h3>
-<p id="section-3.1-1">The design goal is to extend MP-QUIC with minimal changes. The extensions enable endpoints to signal per-stream deadlines. Implementations that support deadline-aware streams <span class="bcp14">MUST</span> implement:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-1">Our design goal is to extend MP-QUIC with minimal changes. The proposed extension enables endpoints to signal a stream's deadline. Implementations that support deadline-aware streams <span class="bcp14">MUST</span> implement:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-3.1-2">
 <li id="section-3.1-2.1">
             <p id="section-3.1-2.1.1">Path Selection: Select paths for transmitting frames, retransmissions and acknowledgements based on metrics relevant to meeting deadlines, including:<a href="#section-3.1-2.1.1" class="pilcrow">¶</a></p>
@@ -1329,7 +1329,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
                 <p id="section-3.1-2.1.2.1.1">Path latency measurements<a href="#section-3.1-2.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-3.1-2.1.2.2">
-                <p id="section-3.1-2.1.2.2.1">Available bandwidth estimation<a href="#section-3.1-2.1.2.2.1" class="pilcrow">¶</a></p>
+                <p id="section-3.1-2.1.2.2.1">Estimation of available bandwidth<a href="#section-3.1-2.1.2.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-3.1-2.1.2.3">
                 <p id="section-3.1-2.1.2.3.1">Observed packet loss rates<a href="#section-3.1-2.1.2.3.1" class="pilcrow">¶</a></p>
@@ -1401,13 +1401,13 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-3.1.1-1">Our extensions build on <span>[<a href="#MP-QUIC" class="cite xref">MP-QUIC</a>]</span>'s multipath framework (e.g., paths, path IDs, and validation) and add only:<a href="#section-3.1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.1.1-2.1">
-              <p id="section-3.1.1-2.1.1">A transport Parameter to enable deadline-aware streams.<a href="#section-3.1.1-2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-3.1.1-2.1.1">A transport parameter to enable deadline-aware streams.<a href="#section-3.1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.1.1-2.2">
               <p id="section-3.1.1-2.2.1">A DEADLINE_CONTROL frame to signal stream deadlines.<a href="#section-3.1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.1.1-2.3">
-              <p id="section-3.1.1-2.3.1">Optional DMTP_ACK frame for improved per-path delay feedback.<a href="#section-3.1.1-2.3.1" class="pilcrow">¶</a></p>
+              <p id="section-3.1.1-2.3.1">An optional DMTP_ACK frame for improved per-path delay feedback.<a href="#section-3.1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.1.1-2.4">
               <p id="section-3.1.1-2.4.1">Optional AFEC support via an extra transport parameter and two frames for source and repair symbol metadata.<a href="#section-3.1.1-2.4.1" class="pilcrow">¶</a></p>
@@ -1438,7 +1438,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <h4 id="name-signalling-deadlines">
 <a href="#section-3.3.1" class="section-number selfRef">3.3.1. </a><a href="#name-signalling-deadlines" class="section-name selfRef">Signalling Deadlines</a>
           </h4>
-<p id="section-3.3.1-1">To signal deadlines, endpoints use the DEADLINE_CONTROL frame (see <a href="#deadline-control-frame" class="auto internal xref">Section 4.2</a>). This frame associates a specific deadline with a stream, indicating the relative time by which the data should be delivered.<a href="#section-3.3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.3.1-1">To signal deadlines, endpoints use the DEADLINE_CONTROL frame (see <a href="#deadline-control-frame" class="auto internal xref">Section 4.2</a>). This frame associates a specific deadline with a stream, indicating the relative time by when the data should be delivered.<a href="#section-3.3.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="deadline-semantics">
@@ -1764,7 +1764,7 @@ the "QUIC Frame Types" registry under the "QUIC Protocol" heading.<a href="#sect
 <dl class="references">
 <dt id="MP-QUIC">[MP-QUIC]</dt>
         <dd>
-<span class="refAuthor">Liu, Y.</span>, <span class="refAuthor">Ma, Y.</span>, <span class="refAuthor">De Coninck, Q.</span>, <span class="refAuthor">Bonaventure, O.</span>, <span class="refAuthor">Huitema, C.</span>, and <span class="refAuthor">M. Kühlewind</span>, <span class="refTitle">"Multipath Extension for QUIC"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-quic-multipath-12</span>, <time datetime="2025-01-22" class="refDate">22 January 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-quic-multipath-12">https://datatracker.ietf.org/doc/html/draft-ietf-quic-multipath-12</a>&gt;</span>. </dd>
+<span class="refAuthor">Liu, Y.</span>, <span class="refAuthor">Ma, Y.</span>, <span class="refAuthor">De Coninck, Q.</span>, <span class="refAuthor">Bonaventure, O.</span>, <span class="refAuthor">Huitema, C.</span>, and <span class="refAuthor">M. Kühlewind</span>, <span class="refTitle">"Multipath Extension for QUIC"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-quic-multipath-13</span>, <time datetime="2025-03-03" class="refDate">3 March 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-quic-multipath-13">https://datatracker.ietf.org/doc/html/draft-ietf-quic-multipath-13</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="QUIC">[QUIC]</dt>
         <dd>
