@@ -16,10 +16,6 @@ keyword:
  - scheduling
  - path aware networks
 venue:
-  group: "quic"
-  type: ""
-  mail: "quic@ietf.org"
-  arch: "https://mailarchive.ietf.org/arch/browse/quic/"
   github: "netsys-lab/mpquic-dmtp-draft"
   latest: "https://netsys-lab.github.io/mpquic-dmtp-draft/draft-tjohn-quic-multipath-dmtp.html"
 
