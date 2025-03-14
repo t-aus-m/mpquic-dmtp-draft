@@ -91,7 +91,6 @@ Table of Contents
    4.  Extension to QUIC-MULTIPATH
      4.1.  Handshake Negotiation and Transport Parameter
      4.2.  DEADLINE_CONTROL Frame
-     4.3.  DMTP_ACK Frame
    5.  API
    6.  Security Considerations
    7.  IANA Considerations
@@ -244,7 +243,8 @@ Table of Contents
 
    *  A DEADLINE_CONTROL frame to signal stream deadlines.
 
-   *  An optional DMTP_ACK frame for improved per-path delay feedback.
+   *  Optional support for a TIMESTAMP frame for improved per-path delay
+      feedback.
 
    *  Optional AFEC support via an extra transport parameter and two
       frames for source and repair symbol metadata.
@@ -371,9 +371,18 @@ Table of Contents
 
    For accurate one-way delay measurements, endpoints MAY use
    synchronized clocks; if full clock sync is not feasible, a fallback
-   to round-trip time measurements is still acceptable.  The DMTP_ACK
-   frame (see Section 4.3) is introduced primarily for improved delay
-   tracking.
+   to round-trip time measurements is still acceptable.  For improved
+   delay tracking the TIMESTAMP frame as proposed in [QUIC-TS] is used.
+
+   If endpoints have agreed on the usage of the TIMESTAMP frame
+   (successful sending negotiation), packets containing a PING
+   (type=0x01) frame MUST be acknowledged on the same path that the
+   packet was received on. 1RTT packets carrying an ACK frame SHOULD add
+   a TIMESTAMP frame, however if the ack-eliciting packet contained a
+   PING (type=0x01) frame, they MUST add a TIMESTAMP frame.
+
+   When using deadline-awareness the receiver SHOULD acknowledge each
+   packet separately.
 
 3.6.2.  Gathering Path Metrics
 
@@ -384,10 +393,9 @@ Table of Contents
        metrics, the endpoint MAY send periodic PING frames or small test
        packets along each active path.
 
-   3.  Path Measurement Frames: This draft introduces an optional
-       DMTP_ACK frame (Section 4.3) for deeper path measurements,
-       including timestamps of packet receipts to estimate per path one-
-       way delay.
+   3.  Path Measurement Frames: This draft uses the optional TIMESTAMP
+       frame ([QUIC-TS]) for deeper path measurements, including
+       timestamps of packet receipts to estimate per path one-way delay.
 
    4.  Congestion windows, RTT estimates, and packet loss detection from
        [QUIC-MULTIPATH]'s standard loss recovery can inform scheduling.
@@ -453,36 +461,6 @@ Table of Contents
 
    *  The DEADLINE_CONTROL frame MUST only be sent in 1-RTT packets.
 
-4.3.  DMTP_ACK Frame
-
-   The DMTP_ACK frame (type=TBD) is used to acknowledge the reception of
-   a packet and feedback the reception time to the sender.  If the
-   received frame contains a PING (type=0x01) frame, the DMTP_ACK frame
-   MUST be sent back on the same path that it was received at.  The
-   DMTP_ACK Frame contains the same information as a [QUIC] ACK frame,
-   but adds a timestamp to it, in order to communicate if a packet has
-   met its deadline or not.
-
-   When using deadline-awareness the receiver SHOULD acknowledge each
-   packet separately.
-
-     DMTP_ACK Frame {
-      Type (i) = TBD,
-      Largest Acknowledged (i),
-      ACK Delay (i),
-      ACK Range Count (i),
-      First ACK Range (i),
-      ACK Range (..) ...,
-      [ECN Counts (..)],
-      Timestamp (i),
-     }
-
-   The DMTP_ACK frame adds the Timestamp field to the [QUIC] ACK frame.
-   It MUST be formatted according to [RFC3339] with a resolution down to
-   the nanosecond, i.e. with 9 digits after the decimal point.  If an
-   endpoint uses a clock with a lower resolution, the remaining digits
-   SHOULD be padded with zeros.
-
 5.  API
 
    Though this draft primarily focuses on wire-level protocol changes,
@@ -521,7 +499,7 @@ Table of Contents
       an attacker cannot exploit deadline-aware frames to amplify
       traffic.
 
-   *  When employing DMTP_ACK frames for one-way delay measurement with
+   *  When employing TIMESTAMP frames for one-way delay measurement with
       clock synchronization, the clock synchronization must also be
       secured.  Otherwise, an attacker injecting false timestamps could
       mislead scheduling.  Endpoints that rely heavily on these
@@ -553,8 +531,6 @@ Table of Contents
               +=========+==================+===============+
               | TBD (1) | DEADLINE_CONTROL | Section 4.2   |
               +---------+------------------+---------------+
-              | TBD (2) | DMTP_ACK         | Section 4.3   |
-              +---------+------------------+---------------+
 
               Table 2: Addition to QUIC Frame Types Entries
 
@@ -585,6 +561,12 @@ Table of Contents
    [QUIC-TLS] Thomson, M., Ed. and S. Turner, Ed., "Using TLS to Secure
               QUIC", RFC 9001, DOI 10.17487/RFC9001, May 2021,
               <https://www.rfc-editor.org/rfc/rfc9001>.
+
+   [QUIC-TS]  Huitema, C., "Quic Timestamps For Measuring One-Way
+              Delays", Work in Progress, Internet-Draft, draft-huitema-
+              quic-ts-08, 28 August 2022,
+              <https://datatracker.ietf.org/doc/html/draft-huitema-quic-
+              ts-08>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
