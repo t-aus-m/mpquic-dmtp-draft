@@ -187,7 +187,7 @@ For accurate one-way delay measurements, endpoints MAY use synchronized clocks; 
 3. Path Measurement Frames: This draft introduces an optional DMTP_ACK frame ({{dmtp-ack-frame}}) for deeper path measurements, including timestamps of packet receipts to estimate per path one-way delay.
 4. Congestion windows, RTT estimates, and packet loss detection from {{QUIC-MULTIPATH}}'s standard loss recovery can inform scheduling.
 
-# Extension to Multipath QUIC
+# Extension to QUIC-MULTIPATH
 
 This extension builds upon {{QUIC-MULTIPATH}}. Below we list the protocol additions and modifications. Unless otherwise noted, all rules of QUIC-MULTIPATH remain.
 
