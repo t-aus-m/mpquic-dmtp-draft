@@ -34,6 +34,7 @@ normative:
    QUIC-TLS: rfc9001
    QUIC-MULTIPATH: I-D.draft-ietf-quic-multipath
    QUIC-AFEC: I-D.draft-dmoskvitin-quic-adaptive-fec
+   QUIC-TS: I-D.draft-huitema-quic-ts
    RFC3339:
    RFC9473:
 
@@ -118,7 +119,7 @@ Our extensions build on {{QUIC-MULTIPATH}}'s multipath framework (e.g., paths, p
 
 - A transport parameter to enable deadline-aware streams.
 - A DEADLINE_CONTROL frame to signal stream deadlines.
-- An optional DMTP_ACK frame for improved per-path delay feedback.
+- Optional support for a TIMESTAMP frame for improved per-path delay feedback.
 - Optional AFEC support via an extra transport parameter and two frames for source and repair symbol metadata.
 
 This preserves the original wire format, ensuring interoperability with {{QUIC-MULTIPATH}} endpoints that do not implement these extensions.
@@ -178,13 +179,17 @@ To schedule traffic effectively, the sender should gather:
 
 A crucial metric for DMTP is the one-way or round-trip delay of each path. This is used to decide whether a new or retransmitted packet can arrive before its deadline. In a path-aware network, the one-way delay might be advertised or inferred from routing information. Otherwise, endpoints measure RTT or one-way delay themselves.
 
-For accurate one-way delay measurements, endpoints MAY use synchronized clocks; if full clock sync is not feasible, a fallback to round-trip time measurements is still acceptable. The DMTP_ACK frame (see {{dmtp-ack-frame}}) is introduced primarily for improved delay tracking.
+For accurate one-way delay measurements, endpoints MAY use synchronized clocks; if full clock sync is not feasible, a fallback to round-trip time measurements is still acceptable. For improved delay tracking the TIMESTAMP frame as proposed in {{QUIC-TS}} is used.
+
+If endpoints have agreed on the usage of the TIMESTAMP frame (successful sending negotiation), packets containing a PING (type=0x01) frame MUST be acknowledged on the same path that the packet was received on. 1RTT packets carrying an ACK frame SHOULD add a TIMESTAMP frame, however if the ack-eliciting packet contained a PING (type=0x01) frame, they MUST add a TIMESTAMP frame.
+
+When using deadline-awareness the receiver SHOULD acknowledge each packet separately.
 
 ### Gathering Path Metrics
 
 1. Path-Aware Networks might provide direct metrics, such as path latency or bandwidth as part of path metadata.
 2. Active Probing: If the underlying network does not provide metrics, the endpoint MAY send periodic PING frames or small test packets along each active path.
-3. Path Measurement Frames: This draft introduces an optional DMTP_ACK frame ({{dmtp-ack-frame}}) for deeper path measurements, including timestamps of packet receipts to estimate per path one-way delay.
+3. Path Measurement Frames: This draft uses the optional TIMESTAMP frame ({{QUIC-TS}}) for deeper path measurements, including timestamps of packet receipts to estimate per path one-way delay.
 4. Congestion windows, RTT estimates, and packet loss detection from {{QUIC-MULTIPATH}}'s standard loss recovery can inform scheduling.
 
 # Extension to QUIC-MULTIPATH
@@ -226,27 +231,6 @@ Usage Constraints:
 - If an endpoint receives a DEADLINE_CONTROL frame without having negotiated support, it MUST treat it as a connection error of type PROTOCOL_VIOLATION.
 - The DEADLINE_CONTROL frame MUST only be sent in 1-RTT packets.
 
-## DMTP_ACK Frame {#dmtp-ack-frame}
-
-The DMTP_ACK frame (type=TBD) is used to acknowledge the reception of a packet and feedback the reception time to the sender. If the received frame contains a PING (type=0x01) frame, the DMTP_ACK frame MUST be sent back on the same path that it was received at. The DMTP_ACK Frame contains the same information as a {{QUIC}} ACK frame, but adds a timestamp to it, in order to communicate if a packet has met its deadline or not.
-
-When using deadline-awareness the receiver SHOULD acknowledge each packet separately.
-
-~~~
-  DMTP_ACK Frame {
-   Type (i) = TBD,
-   Largest Acknowledged (i),
-   ACK Delay (i),
-   ACK Range Count (i),
-   First ACK Range (i),
-   ACK Range (..) ...,
-   [ECN Counts (..)],
-   Timestamp (i),
-  }
-~~~
-
-The DMTP_ACK frame adds the Timestamp field to the {{QUIC}} ACK frame. It MUST be formatted according to {{RFC3339}} with a resolution down to the nanosecond, i.e. with 9 digits after the decimal point. If an endpoint uses a clock with a lower resolution, the remaining digits SHOULD be padded with zeros.
-
 # API
 
 Though this draft primarily focuses on wire-level protocol changes, an implementation that exposes a user-level API might provide:
@@ -267,7 +251,7 @@ Nevertheless, it introduces additional considerations:
 
 - Deadline Signaling: Knowledge of deadlines or priorities may be sensitive if it reveals application timing patterns or critical data intervals. Implementations SHOULD carefully handle metadata (e.g., by encrypting frames in 1-RTT packets).
 - Resource Exhaustion and Flooding: The ability to manage multiple concurrent paths and to schedule or drop data based on deadlines must not weaken QUIC's anti-amplification measures. Endpoints MUST still follow QUIC path validation procedures, ensuring that an attacker cannot exploit deadline-aware frames to amplify traffic.
-- When employing DMTP_ACK frames for one-way delay measurement with clock synchronization, the clock synchronization must also be secured. Otherwise, an attacker injecting false timestamps could mislead scheduling. Endpoints that rely heavily on these measurements should be aware of that risk and possibly cross-check with measured RTT or other heuristics.
+- When employing TIMESTAMP frames for one-way delay measurement with clock synchronization, the clock synchronization must also be secured. Otherwise, an attacker injecting false timestamps could mislead scheduling. Endpoints that rely heavily on these measurements should be aware of that risk and possibly cross-check with measured RTT or other heuristics.
 
 # IANA Considerations
 
@@ -286,7 +270,6 @@ the "QUIC Frame Types" registry under the "QUIC Protocol" heading.
 Value                                              | Frame Name          | Specification
 ---------------------------------------------------|---------------------|-----------------
 TBD (1)                                            | DEADLINE_CONTROL    | {{deadline-control-frame}}
-TBD (2)                                            | DMTP_ACK            | {{dmtp-ack-frame}}
 {: #frame-types title="Addition to QUIC Frame Types Entries"}
 
 --- back
