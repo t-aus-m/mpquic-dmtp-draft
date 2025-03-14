@@ -88,7 +88,7 @@ Table of Contents
      3.6.  Path Metrics
        3.6.1.  Per Path Delay
        3.6.2.  Gathering Path Metrics
-   4.  Extension to Multipath QUIC
+   4.  Extension to QUIC-MULTIPATH
      4.1.  Handshake Negotiation and Transport Parameter
      4.2.  DEADLINE_CONTROL Frame
      4.3.  DMTP_ACK Frame
@@ -392,7 +392,7 @@ Table of Contents
    4.  Congestion windows, RTT estimates, and packet loss detection from
        [QUIC-MULTIPATH]'s standard loss recovery can inform scheduling.
 
-4.  Extension to Multipath QUIC
+4.  Extension to QUIC-MULTIPATH
 
    This extension builds upon [QUIC-MULTIPATH].  Below we list the
    protocol additions and modifications.  Unless otherwise noted, all
