@@ -1,6 +1,6 @@
-# Deadline Aware Streams in MP-QUIC
+# Deadline Aware Streams in QUIC Multipath
 
-This is the working area for the individual Internet-Draft, "Deadline Aware Streams in MP-QUIC".
+This is the working area for the individual Internet-Draft, "Deadline Aware Streams in QUIC Multipath".
 
 * [Editor's Copy](https://netsys-lab.github.io/mpquic-dmtp-draft/#go.draft-tjohn-quic-multipath-dmtp.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-tjohn-quic-multipath-dmtp)
