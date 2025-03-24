@@ -34,7 +34,7 @@ normative:
    QUIC-TLS: rfc9001
    QUIC-MULTIPATH: I-D.draft-ietf-quic-multipath
    QUIC-AFEC: I-D.draft-dmoskvitin-quic-adaptive-fec
-   QUIC-TS: I-D.draft-huitema-quic-ts
+   QUIC-RECEIVE-TS: I-D.draft-smith-quic-receive-ts
    RFC3339:
    RFC9473:
 
@@ -179,17 +179,15 @@ To schedule traffic effectively, the sender should gather:
 
 A crucial metric for DMTP is the one-way or round-trip delay of each path. This is used to decide whether a new or retransmitted packet can arrive before its deadline. In a path-aware network, the one-way delay might be advertised or inferred from routing information. Otherwise, endpoints measure RTT or one-way delay themselves.
 
-For accurate one-way delay measurements, endpoints MAY use synchronized clocks; if full clock sync is not feasible, a fallback to round-trip time measurements is still acceptable. For improved delay tracking the TIMESTAMP frame as proposed in {{QUIC-TS}} is used.
+For accurate one-way delay measurements, endpoints MAY use synchronized clocks; if full clock sync is not feasible, a fallback to round-trip time measurements is still acceptable. For improved delay tracking the additional fields for the receive timestampt of the ACK_EXTENDED frame as proposed in {{QUIC-RECEIVE-TS}} is used.
 
-If endpoints have agreed on the usage of the TIMESTAMP frame (successful sending negotiation), packets containing a PING (type=0x01) frame MUST be acknowledged on the same path that the packet was received on. 1RTT packets carrying an ACK frame SHOULD add a TIMESTAMP frame, however if the ack-eliciting packet contained a PING (type=0x01) frame, they MUST add a TIMESTAMP frame.
-
-When using deadline-awareness the receiver SHOULD acknowledge each packet separately.
+If endpoints have agreed on the usage of the ACK_EXTENDED frame with the additional receive timestamp fields (Bit 1 of extended_ack_features transport parameter), packets containing a PING (type=0x01) frame MUST be acknowledged on the same path that the packet was received on.
 
 ### Gathering Path Metrics
 
 1. Path-Aware Networks might provide direct metrics, such as path latency or bandwidth as part of path metadata.
 2. Active Probing: If the underlying network does not provide metrics, the endpoint MAY send periodic PING frames or small test packets along each active path.
-3. Path Measurement Frames: This draft uses the optional TIMESTAMP frame ({{QUIC-TS}}) for deeper path measurements, including timestamps of packet receipts to estimate per path one-way delay.
+3. Path Measurement Frames: This draft uses the ACK_EXTENDED frame ({{QUIC-RECEIVE-TS}}) for deeper path measurements, including timestamps of packet receipts to estimate per path one-way delay.
 4. Congestion windows, RTT estimates, and packet loss detection from {{QUIC-MULTIPATH}}'s standard loss recovery can inform scheduling.
 
 # Extension to QUIC-MULTIPATH
