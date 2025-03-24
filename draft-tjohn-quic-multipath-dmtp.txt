@@ -5,7 +5,7 @@
 Network Working Group                                            T. John
 Internet-Draft                                               T. Riechard
 Intended status: Informational    Otto-von-Guericke University Magdeburg
-Expires: 15 September 2025                                 14 March 2025
+Expires: 25 September 2025                                 24 March 2025
 
 
                 Deadline Aware Streams in QUIC Multipath
@@ -54,7 +54,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 15 September 2025.
+   This Internet-Draft will expire on 25 September 2025.
 
 Copyright Notice
 
@@ -372,17 +372,14 @@ Table of Contents
    For accurate one-way delay measurements, endpoints MAY use
    synchronized clocks; if full clock sync is not feasible, a fallback
    to round-trip time measurements is still acceptable.  For improved
-   delay tracking the TIMESTAMP frame as proposed in [QUIC-TS] is used.
+   delay tracking the additional fields for the receive timestampt of
+   the ACK_EXTENDED frame as proposed in [QUIC-RECEIVE-TS] is used.
 
-   If endpoints have agreed on the usage of the TIMESTAMP frame
-   (successful sending negotiation), packets containing a PING
+   If endpoints have agreed on the usage of the ACK_EXTENDED frame with
+   the additional receive timestamp fields (Bit 1 of
+   extended_ack_features transport parameter), packets containing a PING
    (type=0x01) frame MUST be acknowledged on the same path that the
-   packet was received on. 1RTT packets carrying an ACK frame SHOULD add
-   a TIMESTAMP frame, however if the ack-eliciting packet contained a
-   PING (type=0x01) frame, they MUST add a TIMESTAMP frame.
-
-   When using deadline-awareness the receiver SHOULD acknowledge each
-   packet separately.
+   packet was received on.
 
 3.6.2.  Gathering Path Metrics
 
@@ -393,8 +390,8 @@ Table of Contents
        metrics, the endpoint MAY send periodic PING frames or small test
        packets along each active path.
 
-   3.  Path Measurement Frames: This draft uses the optional TIMESTAMP
-       frame ([QUIC-TS]) for deeper path measurements, including
+   3.  Path Measurement Frames: This draft uses the ACK_EXTENDED frame
+       ([QUIC-RECEIVE-TS]) for deeper path measurements, including
        timestamps of packet receipts to estimate per path one-way delay.
 
    4.  Congestion windows, RTT estimates, and packet loss detection from
@@ -558,15 +555,18 @@ Table of Contents
               3 March 2025, <https://datatracker.ietf.org/doc/html/
               draft-ietf-quic-multipath-13>.
 
+   [QUIC-RECEIVE-TS]
+              Smith, C., Swett, I., Beshay, J., Jaiswal, S.,
+              Purushothaman, I., and B. Schlinker, "QUIC Extended
+              Acknowledgement for Reporting Packet Receive Timestamps",
+              Work in Progress, Internet-Draft, draft-smith-quic-
+              receive-ts-01, 3 March 2025,
+              <https://datatracker.ietf.org/doc/html/draft-smith-quic-
+              receive-ts-01>.
+
    [QUIC-TLS] Thomson, M., Ed. and S. Turner, Ed., "Using TLS to Secure
               QUIC", RFC 9001, DOI 10.17487/RFC9001, May 2021,
               <https://www.rfc-editor.org/rfc/rfc9001>.
-
-   [QUIC-TS]  Huitema, C., "Quic Timestamps For Measuring One-Way
-              Delays", Work in Progress, Internet-Draft, draft-huitema-
-              quic-ts-08, 28 August 2022,
-              <https://datatracker.ietf.org/doc/html/draft-huitema-quic-
-              ts-08>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
