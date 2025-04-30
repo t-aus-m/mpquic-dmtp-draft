@@ -86,7 +86,7 @@ Within this document:
 
 # Design Overview
 
-## Integrating Deadline-Aware Streams into QUIC-MULTIPATH {#features}
+## Integrating Deadline-Aware Streams into QUIC-MULTIPATH/QUIC {#features}
 
 Our design goal is to extend {{QUIC-MULTIPATH}} and {{QUIC}} respectively with minimal changes. The proposed extension enables endpoints to signal a stream's deadline. Implementations that support deadline-aware streams MUST support:
 
