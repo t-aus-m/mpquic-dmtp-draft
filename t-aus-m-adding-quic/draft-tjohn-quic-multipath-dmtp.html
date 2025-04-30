@@ -1267,7 +1267,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </li>
       </ol>
 <p id="section-1-5">Using the deadline-aware concepts of this proposal together with <span>[<a href="#QUIC" class="cite xref">QUIC</a>]</span> in a single-path scenario will still offer the advantage of deadline-based retransmissions / FEC but limit its effectiveness to the boundaries set by the available path.<a href="#section-1-5" class="pilcrow">¶</a></p>
-<p id="section-1-6">This draft specifies a minimal set of protocol extensions for <span>[<a href="#QUIC-MULTIPATH" class="cite xref">QUIC-MULTIPATH</a>]</span> respectively <span>[<a href="#QUIC" class="cite xref">QUIC</a>]</span> to exchange deadline information at the transport layer, so that endpoints can coordinate scheduling for multipath transmissions with strict time constraints. As the first version of our proposal, our goal is to gather community feedback and gauge interest to guide future refinements.<a href="#section-1-6" class="pilcrow">¶</a></p>
+<p id="section-1-6">This draft specifies a minimal set of protocol extensions for <span>[<a href="#QUIC-MULTIPATH" class="cite xref">QUIC-MULTIPATH</a>]</span> and <span>[<a href="#QUIC" class="cite xref">QUIC</a>]</span> respectively to exchange deadline information at the transport layer, so that endpoints can coordinate scheduling for multipath transmissions with strict time constraints. As the first version of our proposal, our goal is to gather community feedback and gauge interest to guide future refinements.<a href="#section-1-6" class="pilcrow">¶</a></p>
 <div id="motivation-and-applications">
 <section id="section-1.1">
         <h3 id="name-motivation-and-applications">
@@ -1406,7 +1406,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-3.1.1-2.2.1">A DEADLINE_CONTROL frame to signal stream deadlines.<a href="#section-3.1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.1.1-2.3">
-              <p id="section-3.1.1-2.3.1">Optional support for a TIMESTAMP frame for improved per-path delay feedback.<a href="#section-3.1.1-2.3.1" class="pilcrow">¶</a></p>
+              <p id="section-3.1.1-2.3.1">Optional support for a ACK_EXTENDED frame for improved per-path delay feedback.<a href="#section-3.1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.1.1-2.4">
               <p id="section-3.1.1-2.4.1">Optional AFEC support via an extra transport parameter and two frames for source and repair symbol metadata.<a href="#section-3.1.1-2.4.1" class="pilcrow">¶</a></p>
@@ -1754,10 +1754,6 @@ the "QUIC Frame Types" registry under the "QUIC Protocol" heading.<a href="#sect
 <dt id="RFC2119">[RFC2119]</dt>
         <dd>
 <span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC3339">[RFC3339]</dt>
-        <dd>
-<span class="refAuthor">Klyne, G.</span> and <span class="refAuthor">C. Newman</span>, <span class="refTitle">"Date and Time on the Internet: Timestamps"</span>, <span class="seriesInfo">RFC 3339</span>, <span class="seriesInfo">DOI 10.17487/RFC3339</span>, <time datetime="2002-07" class="refDate">July 2002</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc3339">https://www.rfc-editor.org/rfc/rfc3339</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8174">[RFC8174]</dt>
         <dd>

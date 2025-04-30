@@ -145,10 +145,10 @@ Table of Contents
    the boundaries set by the available path.
 
    This draft specifies a minimal set of protocol extensions for
-   [QUIC-MULTIPATH] respectively [QUIC] to exchange deadline information
-   at the transport layer, so that endpoints can coordinate scheduling
-   for multipath transmissions with strict time constraints.  As the
-   first version of our proposal, our goal is to gather community
+   [QUIC-MULTIPATH] and [QUIC] respectively to exchange deadline
+   information at the transport layer, so that endpoints can coordinate
+   scheduling for multipath transmissions with strict time constraints.
+   As the first version of our proposal, our goal is to gather community
    feedback and gauge interest to guide future refinements.
 
 1.1.  Motivation and Applications
@@ -260,8 +260,8 @@ Table of Contents
 
    *  A DEADLINE_CONTROL frame to signal stream deadlines.
 
-   *  Optional support for a TIMESTAMP frame for improved per-path delay
-      feedback.
+   *  Optional support for a ACK_EXTENDED frame for improved per-path
+      delay feedback.
 
    *  Optional AFEC support via an extra transport parameter and two
       frames for source and repair symbol metadata.
@@ -594,10 +594,6 @@ Table of Contents
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/rfc/rfc2119>.
-
-   [RFC3339]  Klyne, G. and C. Newman, "Date and Time on the Internet:
-              Timestamps", RFC 3339, DOI 10.17487/RFC3339, July 2002,
-              <https://www.rfc-editor.org/rfc/rfc3339>.
 
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
