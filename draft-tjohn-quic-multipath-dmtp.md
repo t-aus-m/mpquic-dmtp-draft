@@ -35,7 +35,6 @@ normative:
    QUIC-MULTIPATH: I-D.draft-ietf-quic-multipath
    QUIC-AFEC: I-D.draft-dmoskvitin-quic-adaptive-fec
    QUIC-RECEIVE-TS: I-D.draft-smith-quic-receive-ts
-   RFC3339:
    RFC9473:
 
 informative:
@@ -65,7 +64,7 @@ By integrating deadline-aware concepts into {{QUIC-MULTIPATH}}, we seek to enabl
 
 Using the deadline-aware concepts of this proposal together with {{QUIC}} in a single-path scenario will still offer the advantage of deadline-based retransmissions / FEC but limit its effectiveness to the boundaries set by the available path.
 
-This draft specifies a minimal set of protocol extensions for {{QUIC-MULTIPATH}} respectively {{QUIC}} to exchange deadline information at the transport layer, so that endpoints can coordinate scheduling for multipath transmissions with strict time constraints. As the first version of our proposal, our goal is to gather community feedback and gauge interest to guide future refinements.
+This draft specifies a minimal set of protocol extensions for {{QUIC-MULTIPATH}} and {{QUIC}} respectively to exchange deadline information at the transport layer, so that endpoints can coordinate scheduling for multipath transmissions with strict time constraints. As the first version of our proposal, our goal is to gather community feedback and gauge interest to guide future refinements.
 
 ## Motivation and Applications
 
@@ -125,7 +124,7 @@ Our extensions build on {{QUIC-MULTIPATH}}'s multipath framework (e.g., paths, p
 
 - A transport parameter to enable deadline-aware streams.
 - A DEADLINE_CONTROL frame to signal stream deadlines.
-- Optional support for a TIMESTAMP frame for improved per-path delay feedback.
+- Optional support for a ACK_EXTENDED frame for improved per-path delay feedback.
 - Optional AFEC support via an extra transport parameter and two frames for source and repair symbol metadata.
 
 This preserves the original wire format, ensuring interoperability with both {{QUIC-MULTIPATH}} and {{QUIC}} endpoints that do not implement these extensions.
