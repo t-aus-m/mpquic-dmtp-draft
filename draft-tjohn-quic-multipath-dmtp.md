@@ -80,8 +80,11 @@ Real-time applications often produce data blocks (e.g., video frames or control 
 {::boilerplate bcp14-tagged}
 
 Within this document:
+
 - "Deadline-aware streams" refers to streams in which an application indicates a time by which data must be delivered, beyond which data is no longer useful.
 - "Path" aligns with the {{QUIC-MULTIPATH}} concept: Each path is identified by a unique Path ID and it may reference a specific combination of source and destination IP:port tuples or multiple paths as they may be offered in a path aware network, as defined by {{RFC9473}}.
+- A connection that is "multipath-using" in the sense of this draft is defined as a connection that has the `initial_max_path_id` transport parameter from {{QUIC-MULTIPATH}} set to a value greater than 0.
+- A connection that is "multipath-enabled" in the sense of this draft is defined as a connection that has the `initial_max_path_id` transport parameter from {{QUIC-MULTIPATH}} set to any valid value.
 
 # Design Overview
 
@@ -97,14 +100,14 @@ Our design goal is to extend {{QUIC-MULTIPATH}} and {{QUIC}} respectively with m
 2. Retransmission Control: Implement retransmission policies that:
    - Evaluate whether retransmitted packets can meet remaining deadlines
    - Skip retransmissions when deadlines cannot be met
-   - Consider path conditions when selecting retransmission paths when using {{QUIC-MULTIPATH}}
+   - Consider path conditions when selecting retransmission paths for a multipath-using connection
 
 3. Deadline Monitoring: Track deadline status and:
    - Detect when deadlines cannot be met
    - Signal deadline misses to the application layer
    - Allow applications to specify handling of missed deadlines
 
-Additionally, Implementations supporting deadline-aware streams while using {{QUIC-MULTIPATH}} MUST feature:
+Additionally, Implementations supporting deadline-aware streams with multipath-using connections MUST feature:
 
 1. Path Selection: Select paths for transmitting frames, retransmissions and acknowledgements based on metrics relevant to meeting deadlines, including:
    - Path latency measurements
@@ -120,7 +123,7 @@ Implementations MAY also choose to support:
 
 ### Extensions to QUIC-MULTIPATH/QUIC
 
-Our extensions build on {{QUIC-MULTIPATH}}'s multipath framework (e.g., paths, path IDs, and validation). It will, however, also work with {{QUIC}}, be it with a reduced featureset (see {{features}}). This extension will add only:
+Our extensions build on {{QUIC-MULTIPATH}}'s multipath framework (e.g., paths, path IDs, and validation). It will, however, also work with not multipath-enabled connections, be it with a reduced featureset (see {{features}}). This extension will add only:
 
 - A transport parameter to enable deadline-aware streams.
 - A DEADLINE_CONTROL frame to signal stream deadlines.
@@ -164,19 +167,19 @@ The specific behavior is implementation-specific and MAY be configurable by the 
 
 When deadlines are tight and packet losses frequent, relying solely on retransmissions may cause data to miss its deadline. To mitigate this risk, this extension optionally uses Adaptive FEC (AFEC) as proposed in {{QUIC-AFEC}}. AFEC can reduce the need for retransmissions, particularly in networks with random or bursty loss characteristics.
 
-When using AFEC with {{QUIC-MULTIPATH}}, the Tag Type of the FEC_Tag MUST be set to 1 to indicate "Long Flow Usage". In turn, both source symbol packets and repair symbol packets MUST carry the FEC_Tag frame so that repair packets can be correctly matched to their corresponding source packets across different paths. Such a constraint is not needed in an environment that uses {{QUIC}}.
+When using AFEC in a multipath-using connection, the Tag Type of the FEC_Tag MUST be set to 1 to indicate "Long Flow Usage". In turn, both source symbol packets and repair symbol packets MUST carry the FEC_Tag frame so that repair packets can be correctly matched to their corresponding source packets across different paths. Such a constraint is not needed in a connection that is not multipath-enabled.
 
-If multiple paths are available, FEC repair packets SHOULD be sent over a path different from the one carrying the source data. This de-correlates losses and increases the likelihood that repair symbols arrive even if other paths experience congestion or packet loss. The coding rate (i.e., the ratio of repair symbols to source symbols) MAY be configured on a per-stream basis, depending on the stream's tolerance for overhead versus its deadline sensitivity.
+In a multipath-using connection, FEC repair packets SHOULD be sent over a path different from the one carrying the source data. This de-correlates losses and increases the likelihood that repair symbols arrive even if other paths experience congestion or packet loss. The coding rate (i.e., the ratio of repair symbols to source symbols) MAY be configured on a per-stream basis, depending on the stream's tolerance for overhead versus its deadline sensitivity.
 
 ## Smart Retransmissions
 
-Smart retransmissions in a deadline-aware context mean that lost frames are only retransmitted if there is still enough time left to meet the deadline via one or – in case of a {{QUIC-MULTIPATH}} setup – more paths. The sender computes whether the frames can arrive on time, factoring in the path's estimated one-way delay or RTT. If not, the sender discards the frames rather than wasting congestion window or scheduling capacity.
+Smart retransmissions in a deadline-aware context mean that lost frames are only retransmitted if there is still enough time left to meet the deadline via one or – with a multipath-using connection – more paths. The sender computes whether the frames can arrive on time, factoring in the path's estimated one-way delay or RTT. If not, the sender discards the frames rather than wasting congestion window or scheduling capacity.
 
 ## Path Metrics
 
 To schedule traffic effectively, the sender SHOULD gather:
 
-- When using {{QUIC-MULTIPATH}}: One-Way Delays or RTT for selecting the path(s) that can deliver data before the deadline.
+- One-Way Delays or RTT for determining if the data can reach its destination before the deadline and in case of a multipath-using connection for selecting the path(s) that can deliver data before the deadline.
 - Loss Rate: For deciding whether to apply adaptive FEC or more aggressive retransmissions.
 - Available Bandwidth: So that sending on path(s) with insufficient capacity does not cause additional delay.
 
@@ -186,7 +189,7 @@ A crucial metric for DMTP is the one-way or round-trip delay of the available pa
 
 For accurate one-way delay measurements, endpoints MAY use synchronized clocks; if full clock sync is not feasible, a fallback to round-trip time measurements is still acceptable. For improved delay tracking, the additional fields for the receive timestamp of the ACK_EXTENDED frame as proposed in {{QUIC-RECEIVE-TS}} is used.
 
-In a {{QUIC-MULTIPATH}} environment, if endpoints have agreed on the usage of the ACK_EXTENDED frame with the additional receive timestamp fields (Bit 1 of extended_ack_features transport parameter), packets containing a PING (type=0x01) frame MUST be acknowledged on the same path that the packet was received on.
+With a multipath-using connection, if endpoints have agreed on the usage of the ACK_EXTENDED frame with the additional receive timestamp fields (Bit 1 of extended_ack_features transport parameter), packets containing a PING (type=0x01) frame MUST be acknowledged on the same path that the packet was received on.
 
 ### Gathering Path Metrics
 
