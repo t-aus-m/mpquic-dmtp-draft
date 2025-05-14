@@ -1647,25 +1647,19 @@ Informs the transport that data on <code>stream_id</code> must arrive before <co
 </li>
         <li class="normal" id="section-5-2.3">
           <p id="section-5-2.3.1"><code>GetStreamPaths(stream_id)</code>:
-Returns as set of sets, one for each available path. The path set includes key-value pairs (KVP) which characterize the path. Possible KVPs are:<a href="#section-5-2.3.1" class="pilcrow">¶</a></p>
+Returns a set of tuples in the form of <code>(path_id, role)</code> where <code>role</code> describes the role of the path in the stream. Possible values are:<a href="#section-5-2.3.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5-2.3.2.1">
-              <p id="section-5-2.3.2.1.1"><code>path_id</code>: The numeric ID of the path (mandatory)<a href="#section-5-2.3.2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-5-2.3.2.1.1"><code>data</code>: The path(s) over which data is transmitted<a href="#section-5-2.3.2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-5-2.3.2.2">
-              <p id="section-5-2.3.2.2.1"><code>role</code>: Describes the role of the path in the connection; Possible values: <code>data</code>, <code>retransmission</code>, <code>backup</code>, <code>none</code><a href="#section-5-2.3.2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-5-2.3.2.2.1"><code>retransmission</code>: The path that is used for retransmissions and acknowledgements<a href="#section-5-2.3.2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-5-2.3.2.3">
-              <p id="section-5-2.3.2.3.1"><code>bandwidth</code>: the bandwidth of the path as measured or as signaled by the PAN.<a href="#section-5-2.3.2.3.1" class="pilcrow">¶</a></p>
+              <p id="section-5-2.3.2.3.1"><code>backup</code>: Path(s) that can be used if any <code>data</code> path(s) become(s) unavailable<a href="#section-5-2.3.2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-5-2.3.2.4">
-              <p id="section-5-2.3.2.4.1"><code>owd</code>: One way delay of the path as measured or as signaled by the PAN; <span class="bcp14">MUST</span> only be populated, if <code>rtt</code> is left empty.<a href="#section-5-2.3.2.4.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-5-2.3.2.5">
-              <p id="section-5-2.3.2.5.1"><code>rtt</code>: Round trip time of the path as measured or as signaled by the PAN; <span class="bcp14">MUST</span> only be populated, if <code>owd</code> is left empty.<a href="#section-5-2.3.2.5.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-5-2.3.2.6">
-              <p id="section-5-2.3.2.6.1"><code>costs</code>: If a metric for the cost of a path is available, it may be included here<a href="#section-5-2.3.2.6.1" class="pilcrow">¶</a></p>
+              <p id="section-5-2.3.2.4.1"><code>none</code>: Path(s) that will not be used<a href="#section-5-2.3.2.4.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
@@ -1674,8 +1668,32 @@ Returns as set of sets, one for each available path. The path set includes key-v
 Allows defining, which paths should be used for a given <code>stream_id</code>. <code>paths</code> is a set of tuples in the form of <code>(path_id, role)</code>. Available paths that are omitted here will receive the role <code>none</code>.<a href="#section-5-2.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-5-2.5">
-          <p id="section-5-2.5.1"><code>OnMissedDeadline(stream_id)</code>:
-(Optional) callback that the transport can invoke if data is considered impossible to deliver on time. The application can choose to send new data, discard, or do nothing.<a href="#section-5-2.5.1" class="pilcrow">¶</a></p>
+          <p id="section-5-2.5.1"><code>GetPathMetrics(stream_id, path_id)</code>:
+Returns a set of key-value pairs (KVP) which characterize the path. Possible KVPs are:<a href="#section-5-2.5.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5-2.5.2.1">
+              <p id="section-5-2.5.2.1.1"><code>role</code>: Describes the role of the path in the connection; Possible values: <code>data</code>, <code>retransmission</code>, <code>backup</code>, <code>none</code><a href="#section-5-2.5.2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5-2.5.2.2">
+              <p id="section-5-2.5.2.2.1"><code>bandwidth</code>: the bandwidth in bits/s of the path as measured or as signaled by the PAN.<a href="#section-5-2.5.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5-2.5.2.3">
+              <p id="section-5-2.5.2.3.1"><code>owd</code>: One way delay in ms of the path as measured or as signaled by the PAN; <span class="bcp14">MUST</span> only be populated, if <code>rtt</code> is left empty.<a href="#section-5-2.5.2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5-2.5.2.4">
+              <p id="section-5-2.5.2.4.1"><code>rtt</code>: Round trip time in ms of the path as measured or as signaled by the PAN; <span class="bcp14">MUST</span> only be populated, if <code>owd</code> is left empty.<a href="#section-5-2.5.2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5-2.5.2.5">
+              <p id="section-5-2.5.2.5.1"><code>loss_rate</code>: Loss rate of the path as measured.<a href="#section-5-2.5.2.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5-2.5.2.6">
+              <p id="section-5-2.5.2.6.1"><code>costs</code>: If a metric for the cost of a path is available, it may be included here<a href="#section-5-2.5.2.6.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li class="normal" id="section-5-2.6">
+          <p id="section-5-2.6.1"><code>OnMissedDeadline(stream_id)</code>:
+(Optional) callback that the transport can invoke if data is considered impossible to deliver on time. The application can choose to send new data, discard, or do nothing.<a href="#section-5-2.6.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-5-3">These calls let an application specify deadlines and priorities dynamically.<a href="#section-5-3" class="pilcrow">¶</a></p>

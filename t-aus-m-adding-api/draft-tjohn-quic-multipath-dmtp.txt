@@ -509,31 +509,45 @@ Table of Contents
    *  SetStreamDeadline(stream_id, deadline_ms): Informs the transport
       that data on stream_id must arrive before deadline_ms.
 
-   *  GetStreamPaths(stream_id): Returns as set of sets, one for each
-      available path.  The path set includes key-value pairs (KVP) which
-      characterize the path.  Possible KVPs are:
+   *  GetStreamPaths(stream_id): Returns a set of tuples in the form of
+      (path_id, role) where role describes the role of the path in the
+      stream.  Possible values are:
 
-      -  path_id: The numeric ID of the path (mandatory)
+      -  data: The path(s) over which data is transmitted
 
-      -  role: Describes the role of the path in the connection;
-         Possible values: data, retransmission, backup, none
+      -  retransmission: The path that is used for retransmissions and
+         acknowledgements
 
-      -  bandwidth: the bandwidth of the path as measured or as signaled
-         by the PAN.
+      -  backup: Path(s) that can be used if any data path(s) become(s)
+         unavailable
 
-      -  owd: One way delay of the path as measured or as signaled by
-         the PAN; MUST only be populated, if rtt is left empty.
-
-      -  rtt: Round trip time of the path as measured or as signaled by
-         the PAN; MUST only be populated, if owd is left empty.
-
-      -  costs: If a metric for the cost of a path is available, it may
-         be included here
+      -  none: Path(s) that will not be used
 
    *  SetStreamPaths(stream_id, paths): Allows defining, which paths
       should be used for a given stream_id. paths is a set of tuples in
       the form of (path_id, role).  Available paths that are omitted
       here will receive the role none.
+
+   *  GetPathMetrics(stream_id, path_id): Returns a set of key-value
+      pairs (KVP) which characterize the path.  Possible KVPs are:
+
+      -  role: Describes the role of the path in the connection;
+         Possible values: data, retransmission, backup, none
+
+      -  bandwidth: the bandwidth in bits/s of the path as measured or
+         as signaled by the PAN.
+
+      -  owd: One way delay in ms of the path as measured or as signaled
+         by the PAN; MUST only be populated, if rtt is left empty.
+
+      -  rtt: Round trip time in ms of the path as measured or as
+         signaled by the PAN; MUST only be populated, if owd is left
+         empty.
+
+      -  loss_rate: Loss rate of the path as measured.
+
+      -  costs: If a metric for the cost of a path is available, it may
+         be included here
 
    *  OnMissedDeadline(stream_id): (Optional) callback that the
       transport can invoke if data is considered impossible to deliver
