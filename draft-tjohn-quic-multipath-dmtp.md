@@ -241,20 +241,24 @@ Usage Constraints:
 
 Though this draft primarily focuses on wire-level protocol changes, an implementation that exposes a user-level API might provide:
 
-- `GetDeadlineAwareStreams()`:
-  Returns a set of tuples in the form of `(stream_id, deadline_ms)` where a value of 0 for the `deadline_ms` indicates, that endpoints have agreed on using deadline-aware streams but no DEADLINE_CONTROL Frame has been sent (yet)
-- `SetStreamDeadline(stream_id, deadline_ms)`:
+- `GetDeadlineAwareStreams(connection)`:
+  Returns a set of tuples for the given connection (see {{common-data-structures}}) in the form of `(stream_id, deadline_ms)` where a value of 0 for the `deadline_ms` indicates, that endpoints have agreed on using deadline-aware streams but no `DEADLINE_CONTROL` Frame has been sent (yet)
+- `SetStreamDeadline(connection, stream_id, deadline_ms)`:
   Informs the transport that data on `stream_id` must arrive before `deadline_ms`.
-- `GetStreamPaths(stream_id)`:
+- `GetPaths(connection)`:
+  (Optional for use with PAN) Retrieves the available paths between the endpoints from the underlying PAN and returns them as a set of strings, each representing one path. The representation of a path is dependent on the used PAN.
+- `SetPaths(connection, pan_paths)`:
+  (Optional for use with PAN) Defines the subset of available paths (a set of strings) to be used. This applies to all the streams inside the connection. Depending on the underlying PAN, the string(s) might include wildcards or other operators that can be interpreted by the PAN.
+- `GetPaths(connection, stream_id)`:
   Returns a set of tuples in the form of `(path_id, role)` where `role` describes the role of the path in the stream. Possible values are:
 
   - `data`: The path(s) over which data is transmitted
   - `retransmission`: The path that is used for retransmissions and acknowledgements
   - `backup`: Path(s) that can be used if any `data` path(s) become(s) unavailable
   - `none`: Path(s) that will not be used
-- `SetStreamPaths(stream_id, paths)`:
-  Allows defining, which paths should be used for a given `stream_id`. `paths` is a set of tuples in the form of `(path_id, role)`. Available paths that are omitted here will receive the role `none`.
-- `GetPathMetrics(stream_id, path_id)`:
+- `SetPaths(connection, stream_id, paths)`:
+  (Optional for use with external optimizer) Allows defining, which paths should be used for a given `stream_id`. `paths` is a set of tuples in the form of `(path_id, role, fraction)`. Available paths that are omitted here will receive the role `none`. `fraction` may only be used on paths with the role `data` and is only effective if there is more than one `data` path.
+- `GetPathMetrics(connection, stream_id, path_id)`:
   Returns a set of key-value pairs (KVP) which characterize the path. Possible KVPs are:
 
   - `role`: Describes the role of the path in the connection; Possible values: `data`, `retransmission`, `backup`, `none`
@@ -263,10 +267,15 @@ Though this draft primarily focuses on wire-level protocol changes, an implement
   - `rtt`: Round trip time in ms of the path as measured or as signaled by the PAN; MUST only be populated, if `owd` is left empty.
   - `loss_rate`: Loss rate of the path as measured.
   - `costs`: If a metric for the cost of a path is available, it may be included here
-- `OnMissedDeadline(stream_id)`:
+- `OnMissedDeadline(conenction, stream_id)`:
   (Optional) callback that the transport can invoke if data is considered impossible to deliver on time. The application can choose to send new data, discard, or do nothing.
 
 These calls let an application specify deadlines and priorities dynamically.
+
+## Commonly Used Data Structures {#common-data-structures}
+
+- Connection:
+  The connection is the 4-tuple introduced by {{QUIC}} which identifies a connection. It is structured like `(source_IP, source_port, destination_IP, destination_port)`
 
 # Security Considerations
 
