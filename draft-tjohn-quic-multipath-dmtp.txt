@@ -4,8 +4,8 @@
 
 Network Working Group                                            T. John
 Internet-Draft                                               T. Riechard
-Intended status: Informational    Otto-von-Guericke University Magdeburg
-Expires: 17 November 2025                                    16 May 2025
+Intended status: Experimental     Otto-von-Guericke University Magdeburg
+Expires: 5 January 2026                                      4 July 2025
 
 
                 Deadline Aware Streams in QUIC Multipath
@@ -20,16 +20,16 @@ Abstract
    enabling the signaling of a stream's deadline and ideally by
    combining multipath scheduling, congestion control adaptations, and
    optional forward error correction (FEC).  Moreover, DMTP leverages
-   QUIC-MULTIPATH's path identifiers to distinguish different end-to-end
-   paths as they may be offered in a Path Aware Network (PAN) such as
-   SCION.  This allows an application to select its preferred paths
-   while maintaining interoperability with standard QUIC-MULTIPATH
-   endpoints.  In combination, DMTP enables endpoints to exchange and
-   schedule deadline-aware streams across multiple network paths.
-   Additionally, this proposal also maintains compatibility with QUIC
-   itself, in order to deliver its benefits – albeit with limited
-   effectiveness – even in scenarios where only a single path can or
-   should be used.
+   the path identifiers introduced by the Multipath Extension for QUIC
+   to distinguish different end-to-end paths as they may be offered in a
+   Path Aware Network (PAN) such as SCION.  This allows an application
+   to select its preferred paths while maintaining interoperability with
+   standard endpoints using the Multipath Extension for QUIC.  In
+   combination, DMTP enables endpoints to exchange and schedule
+   deadline-aware streams across multiple network paths.  Additionally,
+   this proposal also maintains compatibility with QUIC itself, in order
+   to deliver its benefits - albeit with limited effectiveness - even in
+   scenarios where only a single path can or should be used.
 
 About This Document
 
@@ -58,7 +58,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 17 November 2025.
+   This Internet-Draft will expire on 5 January 2026.
 
 Copyright Notice
 
@@ -96,12 +96,13 @@ Table of Contents
      4.1.  Handshake Negotiation and Transport Parameter
      4.2.  DEADLINE_CONTROL Frame
    5.  API
+     5.1.  Commonly Used Data Structures
    6.  Security Considerations
    7.  IANA Considerations
    8.  References
      8.1.  Normative References
      8.2.  Informative References
-   Acknowledgments
+   Acknowledgements
    Authors' Addresses
 
 1.  Introduction
@@ -115,14 +116,15 @@ Table of Contents
    low and bounded latency, and can often tolerate no or only partial
    retransmission of missing data.
 
-   Previous work on deadline-aware protocols for [QUIC] includes the
-   Deadline-aware Transport Protocol [QUIC-DTP], a single-path-only
-   approach that introduced deadlines for streams but did not exploit
-   multipath capabilities.  Meanwhile, our [DMTP] approach additionally
-   allows taking advantage of multiple paths, combined with forward
-   error correction (FEC) and intelligent retransmissions, to
-   significantly increase the fraction of packets meeting their
-   deadlines, especially in the presence of lossy or high-latency links.
+   Previous and ongoing work on deadline-aware protocols for [QUIC]
+   includes the Deadline-aware Transport Protocol [QUIC-DTP] as well as
+   Media over QUIC Transport [MOQT], both single-path-only approaches
+   that introduce deadlines for streams but do not exploit multipath
+   capabilities.  Meanwhile, our [DMTP] approach additionally allows
+   taking advantage of multiple paths, combined with forward error
+   correction (FEC) and intelligent retransmissions, to significantly
+   increase the fraction of packets meeting their deadlines, especially
+   in the presence of lossy or high-latency links.
 
    By integrating deadline-aware concepts into [QUIC-MULTIPATH], we seek
    to enable:
@@ -148,8 +150,8 @@ Table of Contents
    [QUIC-MULTIPATH] and [QUIC] respectively to exchange deadline
    information at the transport layer, so that endpoints can coordinate
    scheduling for multipath transmissions with strict time constraints.
-   As the first version of our proposal, our goal is to gather community
-   feedback and gauge interest to guide future refinements.
+   One goal of this proposal is to gather community feedback and gauge
+   interest to guide future refinements.
 
 1.1.  Motivation and Applications
 
@@ -187,19 +189,20 @@ Table of Contents
       data is no longer useful.
 
    *  "Path" aligns with the [QUIC-MULTIPATH] concept: Each path is
-      identified by a unique Path ID and it may reference a specific
-      combination of source and destination IP:port tuples or multiple
-      paths as they may be offered in a path aware network, as defined
-      by [RFC9473].
+      identified by a unique Path ID, and it may reference a specific
+      combination of source and destination IP:port tuples or a distinct
+      end-to-end path as they may be offered in a path aware network, as
+      defined by [RFC9473].
 
-   *  A connection that is "multipath-using" in the sense of this draft
-      is defined as a connection that has the initial_max_path_id
-      transport parameter from [QUIC-MULTIPATH] set to a value greater
-      than 0.
+   *  A connection that is "multipath-capable" in the sense of this
+      draft is defined as a connection in which both endpoints negotiate
+      an initial_max_path_id transport parameter from [QUIC-MULTIPATH]
+      to a value greater than 0.
 
-   *  A connection that is "multipath-enabled" in the sense of this
-      draft is defined as a connection that has the initial_max_path_id
-      transport parameter from [QUIC-MULTIPATH] set to any valid value.
+   *  A connection that is "multipath-active" in the sense of this draft
+      is defined as a connection that currently has two or more
+      validated paths.  Packets may be transmitted on any of these
+      paths.
 
 3.  Design Overview
 
@@ -227,7 +230,7 @@ Table of Contents
        *  Skip retransmissions when deadlines cannot be met
 
        *  Consider path conditions when selecting retransmission paths
-          for a multipath-using connection
+          for a multipath-capable connection
 
    3.  Deadline Monitoring: Track deadline status and:
 
@@ -238,7 +241,7 @@ Table of Contents
        *  Allow applications to specify handling of missed deadlines
 
    Additionally, Implementations supporting deadline-aware streams with
-   multipath-using connections MUST feature:
+   multipath-capable connections MUST feature:
 
    1.  Path Selection: Select paths for transmitting frames,
        retransmissions and acknowledgements based on metrics relevant to
@@ -266,14 +269,14 @@ Table of Contents
 
    Our extensions build on [QUIC-MULTIPATH]'s multipath framework (e.g.,
    paths, path IDs, and validation).  It will, however, also work with
-   not multipath-enabled connections, be it with a reduced featureset
-   (see Section 3.1).  This extension will add only:
+   connections that are not multipath-capable, be it with a reduced
+   feature set (see Section 3.1).  This extension will add only:
 
    *  A transport parameter to enable deadline-aware streams.
 
    *  A DEADLINE_CONTROL frame to signal stream deadlines.
 
-   *  Optional support for a ACK_EXTENDED frame for improved per-path
+   *  Optional support for an ACK_EXTENDED frame for improved per-path
       delay feedback.
 
    *  Optional AFEC support via an extra transport parameter and two
@@ -289,7 +292,7 @@ Table of Contents
    [QUIC-MULTIPATH], endpoints can discover and utilize multiple
    disjoint or partially disjoint paths.  This can be provided, for
    example, by [SCION] or other architectures such as [SR].  In such an
-   environment, a single source–destination address pair may yield
+   environment, a single source-destination address pair may yield
    multiple distinct end-to-end paths, each with unique performance
    characteristics (e.g., latency, loss rate).  These paths can be
    exposed to the transport layer via distinct Path IDs in
@@ -357,15 +360,15 @@ Table of Contents
    retransmissions, particularly in networks with random or bursty loss
    characteristics.
 
-   When using AFEC in a multipath-using connection, the Tag Type of the
-   FEC_Tag MUST be set to 1 to indicate "Long Flow Usage".  In turn,
+   When using AFEC in a multipath-capable connection, the Tag Type of
+   the FEC_Tag MUST be set to 1 to indicate "Long Flow Usage".  In turn,
    both source symbol packets and repair symbol packets MUST carry the
    FEC_Tag frame so that repair packets can be correctly matched to
    their corresponding source packets across different paths.  Such a
    constraint is not needed in a connection that is not multipath-
-   enabled.
+   capable.
 
-   In a multipath-using connection, FEC repair packets SHOULD be sent
+   In a multipath-active connection, FEC repair packets SHOULD be sent
    over a path different from the one carrying the source data.  This
    de-correlates losses and increases the likelihood that repair symbols
    arrive even if other paths experience congestion or packet loss.  The
@@ -377,7 +380,7 @@ Table of Contents
 
    Smart retransmissions in a deadline-aware context mean that lost
    frames are only retransmitted if there is still enough time left to
-   meet the deadline via one or – with a multipath-using connection –
+   meet the deadline via one or - with a multipath-active connection -
    more paths.  The sender computes whether the frames can arrive on
    time, factoring in the path's estimated one-way delay or RTT.  If
    not, the sender discards the frames rather than wasting congestion
@@ -388,7 +391,7 @@ Table of Contents
    To schedule traffic effectively, the sender SHOULD gather:
 
    *  One-Way Delays or RTT for determining if the data can reach its
-      destination before the deadline and in case of a multipath-using
+      destination before the deadline and in case of a multipath-capable
       connection for selecting the path(s) that can deliver data before
       the deadline.
 
@@ -413,7 +416,7 @@ Table of Contents
    delay tracking, the additional fields for the receive timestamp of
    the ACK_EXTENDED frame as proposed in [QUIC-RECEIVE-TS] is used.
 
-   With a multipath-using connection, if endpoints have agreed on the
+   With a multipath-capable connection, if endpoints have agreed on the
    usage of the ACK_EXTENDED frame with the additional receive timestamp
    fields (Bit 1 of extended_ack_features transport parameter), packets
    containing a PING (type=0x01) frame MUST be acknowledged on the same
@@ -501,20 +504,84 @@ Table of Contents
    Though this draft primarily focuses on wire-level protocol changes,
    an implementation that exposes a user-level API might provide:
 
-   *  SetStreamDeadline(stream_id, deadline_ms): Informs the transport
-      that data on stream_id must arrive before deadline_ms.
+   *  GetDeadlineAwareStreams(connection): Returns a set of tuples for
+      the given connection (see Section 5.1) in the form of (stream_id,
+      deadline_ms) where a value of 0 for the deadline_ms indicates,
+      that endpoints have agreed on using deadline-aware streams but no
+      DEADLINE_CONTROL Frame has been sent (yet)
 
-   *  SetStreamPriority(stream_id, priority): Assigns or updates the
-      priority for a stream.  Lower numerical priority can indicate
-      higher reliability requirement.
+   *  SetStreamDeadline(connection, stream_id, deadline_ms): Informs the
+      transport that data on stream_id must arrive before deadline_ms.
 
-   *  OnMissedDeadline(stream_id): (Optional) callback that the
-      transport can invoke if data is considered impossible to deliver
-      on time.  The application can choose to send new data, discard, or
-      do nothing.
+   *  GetAvailablePaths(connection): (Optional for use with PAN)
+      Retrieves the available paths between the endpoints from the
+      underlying PAN and returns them as a set of strings, each
+      representing one path.  The representation of a path is dependent
+      on the used PAN.
+
+   *  SetPaths(connection, pan_paths): (Optional for use with PAN)
+      Defines the subset of available paths (a set of strings) to be
+      used.  This applies to all the streams inside the connection.
+      Depending on the underlying PAN, the string(s) might include
+      wildcards or other operators that can be interpreted by the PAN.
+
+   *  GetStreamPaths(connection, stream_id): Returns a set of tuples in
+      the form of (path_id, role) where role describes the role of the
+      path in the stream.  Possible values are:
+
+      -  data: The path(s) over which data is transmitted
+
+      -  retransmission: The path that is used for retransmissions and
+         acknowledgements
+
+      -  backup: Path(s) that can be used if any data path(s) become(s)
+         unavailable
+
+      -  none: Path(s) that will not be used
+
+   *  SetStreamPaths(connection, stream_id, paths): (Optional for use
+      with external optimizer) Allows defining, which paths should be
+      used for a given stream_id. paths is a set of tuples in the form
+      of (path_id, role, fraction).  Available paths that are omitted
+      here will receive the role none. fraction may only be used on
+      paths with the role data and is only effective if there is more
+      than one data path.
+
+   *  GetPathMetrics(connection, stream_id, path_id): Returns a set of
+      key-value pairs (KVP) which characterize the path.  Possible KVPs
+      are:
+
+      -  role: Describes the role of the path in the connection;
+         Possible values: data, retransmission, backup, none
+
+      -  bandwidth: the bandwidth in bits/s of the path as measured or
+         as signaled by the PAN.
+
+      -  owd: One way delay in ms of the path as measured or as signaled
+         by the PAN; MUST only be populated, if rtt is left empty.
+
+      -  rtt: Round trip time in ms of the path as measured or as
+         signaled by the PAN; MUST only be populated, if owd is left
+         empty.
+
+      -  loss_rate: Loss rate of the path as measured.
+
+      -  costs: If a metric for the cost of a path is available, it may
+         be included here
+
+   *  OnMissedDeadline(connection, stream_id): (Optional) callback that
+      the transport can invoke if data is considered impossible to
+      deliver on time.  The application can choose to send new data,
+      discard, or do nothing.
 
    These calls let an application specify deadlines and priorities
    dynamically.
+
+5.1.  Commonly Used Data Structures
+
+   *  Connection: The connection is the 4-tuple introduced by [QUIC]
+      which identifies a connection.  It is structured like (source_IP,
+      source_port, destination_IP, destination_port)
 
 6.  Security Considerations
 
@@ -628,6 +695,12 @@ Table of Contents
               <https://doi.org/10.23919/
               ifipnetworking57963.2023.10186417>.
 
+   [MOQT]     Nandakumar, S., Vasiliev, V., Swett, I., and A. Frindell,
+              "Media over QUIC Transport", Work in Progress, Internet-
+              Draft, draft-ietf-moq-transport-12, 23 June 2025,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-moq-
+              transport-12>.
+
    [QUIC-DTP] Cui, Y., Ma, C., Shi, H., Zheng, K., and W. Wang,
               "Deadline-aware Transport Protocol", Work in Progress,
               Internet-Draft, draft-shi-quic-dtp-10, 29 July 2024,
@@ -645,12 +718,12 @@ Table of Contents
               Routing Architecture", RFC 8402, DOI 10.17487/RFC8402,
               July 2018, <https://www.rfc-editor.org/rfc/rfc8402>.
 
-Acknowledgments
+Acknowledgements
 
    The authors thank the QUIC working group and the designers of [QUIC],
    [QUIC-MULTIPATH] and [QUIC-DTP] for paving the way for deadline-aware
    features in QUIC.  The concept of scheduling data with deadlines over
-   multiple paths builds on numerous discussions around partial
+   multiple paths builds on numerous discussions about partial
    reliability, adaptive FEC, and optimal path selection.
 
 Authors' Addresses
